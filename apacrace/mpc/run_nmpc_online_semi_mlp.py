@@ -53,7 +53,13 @@ import os
 import copy
 import subprocess
 
+import matplotlib
+matplotlib.use('Agg')  # Set non-GUI backend before importing pyplot
+# matplotlib.use("pgf")  # Uses a LaTeX-compatible backend
+
 import matplotlib.pylab as pylab
+
+
 
 params = {'legend.fontsize': 'x-large',
          'axes.labelsize': 'x-large',
@@ -346,6 +352,8 @@ def get_optimal_control(pwm_ref,steer_ref,state_left,curvature_left,\
 
 
 RUN_FOLDER = 'RUN_ONLINE_' + str(RUN_NO) + '_' + str(GP_EPS_LEN) + '/'
+
+SIM_TIME = 10
 SAMPLING_TIME = 0.02
 HORIZON = 20
 COST_Q = np.diag([1, 1])
@@ -371,7 +379,6 @@ model_kin = Kinematic6(**params)
 TRACK_NAME = 'ETHZ'
 track = ETHZ(reference='optimal', longer=True)
 print(track.raceline[0][0])
-SIM_TIME = 36
 
 #####################################################################
 # load mlp models
@@ -480,9 +487,9 @@ LnS, = ax.plot(states[0,0], states[1,0], '#4B0082', label='Trajectory',alpha=0.6
 # LnR, = ax.plot(states[0,0], states[1,0], '-b', marker='o', markersize=.5, lw=0.5, label="reference")
 xyproj, _ = track.project(x=x_init[0], y=x_init[1], raceline=track.raceline)
 LnP, = ax.plot(states[0,0] + dims[:,0]*np.cos(states[2,0]) - dims[:,1]*np.sin(states[2,0])\
-		, states[1,0] + dims[:,0]*np.sin(states[2,0]) + dims[:,1]*np.cos(states[2,0]), 'purple', alpha=0.8, label='Current pose')
+		, states[1,0] + dims[:,0]*np.sin(states[2,0]) + dims[:,1]*np.cos(states[2,0]), 'red', alpha=0.8, label='Current pose')
 LnH, = ax.plot(hstates[0], hstates[1], '-g', marker='o', markersize=.5, lw=0.5, color='green', label="ground truth")
-LnH2, = ax.plot(hstates2[0], hstates2[1], '-r', marker='o', markersize=.5, lw=0.5, color='blue', label="prediction")
+LnH2, = ax.plot(hstates2[0], hstates2[1], '-b', marker='o', markersize=.5, lw=0.5, color='blue', label="prediction")
 plt.xlabel('x [m]')
 plt.ylabel('y [m]')
 plt.legend()
@@ -692,66 +699,75 @@ def update(idt):
     plt.tight_layout()
 
 
+# plots
 
 # plot speed
 plt.figure()
 vel = np.sqrt(dstates[0,:]**2 + dstates[1,:]**2)
-plt.plot(time[:n_steps-horizon], vel[:n_steps-horizon], label='abs')
-plt.plot(time[:n_steps-horizon], states[3,:n_steps-horizon], label='vx')
-plt.plot(time[:n_steps-horizon], states[4,:n_steps-horizon], label='vy')
-plt.plot(time[:n_steps-horizon], ref_speeds, label='ref_speeds')
-plt.xlabel('time [s]')
-plt.ylabel('speed [m/s]')
+plt.plot(time[:n_steps-horizon], vel[:n_steps-horizon],color="#E5AE1C",linewidth=4, label='Actual')
+# plt.plot(time[:n_steps-horizon], states[3,:n_steps-horizon], label='vx')
+# plt.plot(time[:n_steps-horizon], states[4,:n_steps-horizon], label='vy')
+plt.plot(time[:n_steps-horizon], ref_speeds,color="#0B67B2",linewidth=4, label='Reference')
+plt.xlabel(r'Time (s)')
+plt.ylabel(r'Speed ($\frac{ \mathrm{m} }{\mathrm{s}}$)')
+plt.title('Speeds')
 plt.grid(True)
 plt.legend()
+plt.tight_layout()
 plt.savefig(media_dir+'/Speeds.png')
 
 
 # plot acceleration
 plt.figure()
-plt.plot(time[:n_steps-horizon], inputs[0,:n_steps-horizon])
-plt.xlabel('time [s]')
+plt.plot(time[:n_steps-horizon], inputs[0,:n_steps-horizon],color="#0B67B2",linewidth=4)
+plt.xlabel(r'Time (s)')
 plt.ylabel('PWM duty cycle [-]')
 plt.grid(True)
+plt.tight_layout()
 plt.savefig(media_dir+'/Acc.png')
 
 
 # plot mus
 plt.figure()
-plt.plot(MUs, label="GT")
-plt.plot(MU_preds,  label="Preds")
+plt.plot(time[:n_steps-horizon],MUs,color="#E5AE1C",linewidth=4, label=r"Actual")
+plt.plot(time[:n_steps-horizon],MU_preds,color="#0B67B2",linewidth=4,  label=r"Predicted")
 plt.grid(True)
-plt.xlabel('time [s]')
-plt.ylabel('mu')
+plt.xlabel(r'Time (s)')
+plt.ylabel(r'$\mu$')
 plt.legend()
+plt.tight_layout()
 plt.savefig(media_dir+'/MUs.png')
 
 # plot steering angle
 plt.figure()
-plt.plot(time[:n_steps-horizon], inputs[1,:n_steps-horizon])
-plt.xlabel('time [s]')
-plt.ylabel('steering [rad]')
+plt.plot(time[:n_steps-horizon], inputs[1,:n_steps-horizon],color="#0B67B2",linewidth=4)
+plt.xlabel('time (s)')
+plt.ylabel('Steering (rad)')
 plt.grid(True)
+plt.tight_layout()
 plt.savefig(media_dir+'/steering.png')
 
 
 # plot inertial heading
 plt.figure()
-plt.plot(time[:n_steps-horizon], states[2,:n_steps-horizon])
-plt.xlabel('time [s]')
-plt.ylabel('orientation [rad]')
+plt.plot(time[:n_steps-horizon], states[2,:n_steps-horizon],color="#0B67B2",linewidth=4)
+plt.xlabel('Time (s)')
+plt.ylabel('Orientation (rad)')
 plt.grid(True)
+plt.tight_layout()
 plt.savefig(media_dir+'/orientation.png')
 
+
 plt.figure()
-plt.plot(time[:n_steps-horizon], Dfs[:n_steps-horizon], label='Df')
-plt.plot(time[:n_steps-horizon], Drs[:n_steps-horizon], label='Dr')
-plt.plot(time[:n_steps-horizon], Dfs_pred[:n_steps-horizon], label='Df')
-plt.plot(time[:n_steps-horizon], Drs_pred[:n_steps-horizon], label='Dr')
-plt.xlabel('time [s]')
+plt.plot(time[:n_steps-horizon], Dfs[:n_steps-horizon],color="#0B67B2",linewidth=4,linestyle="--", label='Actual Df')
+plt.plot(time[:n_steps-horizon], Drs[:n_steps-horizon],color="#D44A1C",linewidth=4,linestyle="--", label='Actual Dr')
+plt.plot(time[:n_steps-horizon], Dfs_pred[:n_steps-horizon],color="#0B67B2",linewidth=4,linestyle="-", label='Predicted Df')
+plt.plot(time[:n_steps-horizon], Drs_pred[:n_steps-horizon],color="#D44A1C",linewidth=4,linestyle="-", label='Predicted Dr')
+plt.xlabel('time (s)')
 plt.ylabel('mu*N [N]')
 plt.grid(True)
 plt.legend()
+plt.tight_layout()
 plt.savefig(media_dir+'/Ds.png')
 
 # **Set up Matplotlib Animation**

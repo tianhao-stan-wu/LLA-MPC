@@ -10,7 +10,11 @@ import casadi
 import _pickle as pickle
 
 import matplotlib
-matplotlib.use('Agg')  # Set non-GUI backend before importing pyplot
+from matplotlib.lines import lineStyles
+
+# matplotlib.use('Agg')  # Set non-GUI backend before importing pyplot
+matplotlib.use("pgf")  # Uses a LaTeX-compatible backend
+
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib.colors as mcolors
@@ -33,11 +37,11 @@ import imageio
 import copy
 
 import matplotlib.pylab as pylab
-params = {'legend.fontsize': 'x-large',
-         'axes.labelsize': 'x-large',
-         'axes.titlesize':'x-large',
-         'xtick.labelsize':'x-large',
-         'ytick.labelsize':'x-large'}
+params = {'legend.fontsize': 'xx-large',
+         'axes.labelsize': 'xx-large',
+         'axes.titlesize':'xx-large',
+         'xtick.labelsize':'xx-large',
+         'ytick.labelsize':'xx-large'}
 pylab.rcParams.update(params)
 plt.rcParams['text.usetex'] = True
 
@@ -57,7 +61,7 @@ TRACK_CONS = False
 
 #####################################################################
 # default settings
-
+SIM_TIME = 36
 SAMPLING_TIME = 0.02
 HORIZON = 20
 COST_Q = np.diag([1, 1])
@@ -81,7 +85,7 @@ model_run = Dynamic(**params)
 #####################################################################
 # Model Bank Setup
 
-N_MODELS = 2  # number of models in the bank
+N_MODELS = 5000  # number of models in the bank
 N_AC_STEPS = 10  # Number of steps to accumulate error
 smoothing_mu = 20 # moving avg for MUs
 smoothing_mu_over_mod = 10 # getting the avg MUs for the best N models
@@ -188,7 +192,6 @@ params_pass = (Bfs_pass, Cfs_pass, Dfs_pass, Brs_pass, Crs_pass, Drs_pass)
 
 TRACK_NAME = 'ETHZ'
 track = ETHZ(reference='optimal', longer=True)
-SIM_TIME = 1
 
 #####################################################################
 # extract data
@@ -262,7 +265,7 @@ states[:,0] = x_init
 print('starting at ({:.1f},{:.1f})'.format(x_init[0], x_init[1]))
 
 
-media_dir = "L2A"
+media_dir = "LLA"
 os.makedirs(media_dir, exist_ok=True)
 
 # dynamic plot
@@ -497,10 +500,12 @@ def update(idt):
 
 # Plot model switching performance
 plt.figure()
-plt.plot(model_switches, model_mses, 'bo-')
+plt.plot(np.array(model_switches)*Ts, chosen_models, 'bx-')
 plt.xlabel('Time step')
-plt.ylabel('MSE of chosen model')
-plt.title('Model Switching Performance')
+plt.ylabel('Chosen model index')
+plt.title('Model Switching')
+plt.xlim(0,SIM_TIME)
+plt.ylim(0,N_MODELS)
 plt.grid(True)
 plt.tight_layout()
 plt.savefig(media_dir+'/Switching.png')
@@ -508,12 +513,13 @@ plt.savefig(media_dir+'/Switching.png')
 # plot speed
 plt.figure()
 vel = np.sqrt(dstates[0,:]**2 + dstates[1,:]**2)
-plt.plot(time[:n_steps-horizon], vel[:n_steps-horizon], label='Actual')
+plt.plot(time[:n_steps-horizon], vel[:n_steps-horizon],color="#E5AE1C",linewidth=4, label='Actual')
 # plt.plot(time[:n_steps-horizon], states[3,:n_steps-horizon], label='vx')
 # plt.plot(time[:n_steps-horizon], states[4,:n_steps-horizon], label='vy')
-plt.plot(time[:n_steps-horizon], ref_speeds, label='Reference')
-plt.xlabel('Time (s)')
-plt.ylabel('speed [m/s]')
+plt.plot(time[:n_steps-horizon], ref_speeds,color="#0B67B2",linewidth=4, label='Reference')
+plt.xlabel(r'Time (s)')
+plt.ylabel(r'Speed ($\frac{ \mathrm{m} }{\mathrm{s}}$)')
+plt.title('Speeds')
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
@@ -522,8 +528,8 @@ plt.savefig(media_dir+'/Speeds.png')
 
 # plot acceleration
 plt.figure()
-plt.plot(time[:n_steps-horizon], inputs[0,:n_steps-horizon])
-plt.xlabel('time [s]')
+plt.plot(time[:n_steps-horizon], inputs[0,:n_steps-horizon],color="#0B67B2",linewidth=4)
+plt.xlabel(r'Time (s)')
 plt.ylabel('PWM duty cycle [-]')
 plt.grid(True)
 plt.tight_layout()
@@ -532,10 +538,10 @@ plt.savefig(media_dir+'/Acc.png')
 
 # plot mus
 plt.figure()
-plt.plot(MUs, label=r"Actual $\mu$")
-plt.plot(MU_preds,  label=r"Predicted $\mu$")
+plt.plot(time[:n_steps-horizon],MUs,color="#E5AE1C",linewidth=4, label=r"Actual")
+plt.plot(time[:n_steps-horizon],MU_preds,color="#0B67B2",linewidth=4,  label=r"Predicted")
 plt.grid(True)
-plt.xlabel('Time (s)')
+plt.xlabel(r'Time (s)')
 plt.ylabel(r'$\mu$')
 plt.legend()
 plt.tight_layout()
@@ -543,9 +549,9 @@ plt.savefig(media_dir+'/MUs.png')
 
 # plot steering angle
 plt.figure()
-plt.plot(time[:n_steps-horizon], inputs[1,:n_steps-horizon])
+plt.plot(time[:n_steps-horizon], inputs[1,:n_steps-horizon],color="#0B67B2",linewidth=4)
 plt.xlabel('time (s)')
-plt.ylabel('steering (rad)')
+plt.ylabel('Steering (rad)')
 plt.grid(True)
 plt.tight_layout()
 plt.savefig(media_dir+'/steering.png')
@@ -553,7 +559,7 @@ plt.savefig(media_dir+'/steering.png')
 
 # plot inertial heading
 plt.figure()
-plt.plot(time[:n_steps-horizon], states[2,:n_steps-horizon])
+plt.plot(time[:n_steps-horizon], states[2,:n_steps-horizon],color="#0B67B2",linewidth=4)
 plt.xlabel('Time (s)')
 plt.ylabel('Orientation (rad)')
 plt.grid(True)
@@ -562,10 +568,10 @@ plt.savefig(media_dir+'/orientation.png')
 
 
 plt.figure()
-plt.plot(time[:n_steps-horizon], Dfs[:n_steps-horizon], label='Actual Df')
-plt.plot(time[:n_steps-horizon], Drs[:n_steps-horizon], label='Actual Dr')
-plt.plot(time[:n_steps-horizon], Dfs_preds[:n_steps-horizon], label='Predicted Df')
-plt.plot(time[:n_steps-horizon], Drs_preds[:n_steps-horizon], label='Predicted Dr')
+plt.plot(time[:n_steps-horizon], Dfs[:n_steps-horizon],color="#0B67B2",linewidth=4,linestyle="--", label='Actual Df')
+plt.plot(time[:n_steps-horizon], Drs[:n_steps-horizon],color="#D44A1C",linewidth=4,linestyle="--", label='Actual Dr')
+plt.plot(time[:n_steps-horizon], Dfs_preds[:n_steps-horizon],color="#0B67B2",linewidth=4,linestyle="-", label='Predicted Df')
+plt.plot(time[:n_steps-horizon], Drs_preds[:n_steps-horizon],color="#D44A1C",linewidth=4,linestyle="-", label='Predicted Dr')
 plt.xlabel('time (s)')
 plt.ylabel('mu*N [N]')
 plt.grid(True)

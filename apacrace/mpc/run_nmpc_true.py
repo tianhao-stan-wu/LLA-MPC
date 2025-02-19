@@ -66,7 +66,9 @@ import os
 import subprocess
 import copy
 
-
+import matplotlib
+matplotlib.use('Agg')  # Set non-GUI backend before importing pyplot
+# matplotlib.use("pgf")  # Uses a LaTeX-compatible backend
 
 import matplotlib.pylab as pylab
 params = {'legend.fontsize': 'x-large',
@@ -302,60 +304,67 @@ def update(idt):
 # plot speed
 plt.figure()
 vel = np.sqrt(dstates[0,:]**2 + dstates[1,:]**2)
-plt.plot(time[:n_steps-horizon], vel[:n_steps-horizon], label='abs')
-plt.plot(time[:n_steps-horizon], states[3,:n_steps-horizon], label='vx')
-plt.plot(time[:n_steps-horizon], states[4,:n_steps-horizon], label='vy')
-plt.plot(time[:n_steps-horizon], ref_speeds, label='ref_speeds')
-plt.xlabel('time [s]')
-plt.ylabel('speed [m/s]')
+plt.plot(time[:n_steps-horizon], vel[:n_steps-horizon],color="#E5AE1C",linewidth=4, label='Actual')
+# plt.plot(time[:n_steps-horizon], states[3,:n_steps-horizon], label='vx')
+# plt.plot(time[:n_steps-horizon], states[4,:n_steps-horizon], label='vy')
+plt.plot(time[:n_steps-horizon], ref_speeds,color="#0B67B2",linewidth=4, label='Reference')
+plt.xlabel(r'Time (s)')
+plt.ylabel(r'Speed ($\frac{ \mathrm{m} }{\mathrm{s}}$)')
+plt.title('Speeds')
 plt.grid(True)
 plt.legend()
+plt.tight_layout()
 plt.savefig(media_dir+'/Speeds.png')
 
 
 # plot acceleration
 plt.figure()
-plt.plot(time[:n_steps-horizon], inputs[0,:n_steps-horizon])
-plt.xlabel('time [s]')
+plt.plot(time[:n_steps-horizon], inputs[0,:n_steps-horizon],color="#0B67B2",linewidth=4)
+plt.xlabel(r'Time (s)')
 plt.ylabel('PWM duty cycle [-]')
 plt.grid(True)
+plt.tight_layout()
 plt.savefig(media_dir+'/Acc.png')
 
 
 # plot mus
 plt.figure()
-plt.plot(MU_preds,  label="GT")
+plt.plot(time[:n_steps-horizon],MU_preds,color="#E5AE1C",linewidth=4, label=r"Actual")
 plt.grid(True)
-plt.xlabel('time [s]')
-plt.ylabel('mu')
+plt.xlabel(r'Time (s)')
+plt.ylabel(r'$\mu$')
 plt.legend()
+plt.tight_layout()
 plt.savefig(media_dir+'/MUs.png')
 
 # plot steering angle
 plt.figure()
-plt.plot(time[:n_steps-horizon], inputs[1,:n_steps-horizon])
-plt.xlabel('time [s]')
-plt.ylabel('steering [rad]')
+plt.plot(time[:n_steps-horizon], inputs[1,:n_steps-horizon],color="#0B67B2",linewidth=4)
+plt.xlabel('time (s)')
+plt.ylabel('Steering (rad)')
 plt.grid(True)
+plt.tight_layout()
 plt.savefig(media_dir+'/steering.png')
 
 
 # plot inertial heading
 plt.figure()
-plt.plot(time[:n_steps-horizon], states[2,:n_steps-horizon])
-plt.xlabel('time [s]')
-plt.ylabel('orientation [rad]')
+plt.plot(time[:n_steps-horizon], states[2,:n_steps-horizon],color="#0B67B2",linewidth=4)
+plt.xlabel('Time (s)')
+plt.ylabel('Orientation (rad)')
 plt.grid(True)
+plt.tight_layout()
 plt.savefig(media_dir+'/orientation.png')
 
 
 plt.figure()
-plt.plot(time[:n_steps-horizon], Dfs[:n_steps-horizon], label='Df')
-plt.plot(time[:n_steps-horizon], Drs[:n_steps-horizon], label='Dr')
-plt.xlabel('time [s]')
+plt.plot(time[:n_steps-horizon], Dfs[:n_steps-horizon],color="#0B67B2",linewidth=4,linestyle="-", label='Actual Df')
+plt.plot(time[:n_steps-horizon], Drs[:n_steps-horizon],color="#D44A1C",linewidth=4,linestyle="-", label='Actual Dr')
+plt.xlabel('time (s)')
 plt.ylabel('mu*N [N]')
 plt.grid(True)
 plt.legend()
+plt.tight_layout()
 plt.savefig(media_dir+'/Ds.png')
 
 
