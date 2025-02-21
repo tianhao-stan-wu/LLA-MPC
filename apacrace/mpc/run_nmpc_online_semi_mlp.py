@@ -61,11 +61,11 @@ import matplotlib.pylab as pylab
 
 
 
-params = {'legend.fontsize': 'x-large',
-         'axes.labelsize': 'x-large',
-         'axes.titlesize':'x-large',
-         'xtick.labelsize':'x-large',
-         'ytick.labelsize':'x-large'}
+params = {'legend.fontsize': 'xx-large',
+         'axes.labelsize': 'xx-large',
+         'axes.titlesize':'xx-large',
+         'xtick.labelsize':'xx-large',
+         'ytick.labelsize':'xx-large'}
 pylab.rcParams.update(params)
 plt.rcParams['text.usetex'] = True
 
@@ -353,7 +353,7 @@ def get_optimal_control(pwm_ref,steer_ref,state_left,curvature_left,\
 
 RUN_FOLDER = 'RUN_ONLINE_' + str(RUN_NO) + '_' + str(GP_EPS_LEN) + '/'
 
-SIM_TIME = 10
+SIM_TIME = 36
 SAMPLING_TIME = 0.02
 HORIZON = 20
 COST_Q = np.diag([1, 1])
@@ -490,8 +490,8 @@ LnP, = ax.plot(states[0,0] + dims[:,0]*np.cos(states[2,0]) - dims[:,1]*np.sin(st
 		, states[1,0] + dims[:,0]*np.sin(states[2,0]) + dims[:,1]*np.cos(states[2,0]), 'red', alpha=0.8, label='Current pose')
 LnH, = ax.plot(hstates[0], hstates[1], '-g', marker='o', markersize=.5, lw=0.5, color='green', label="ground truth")
 LnH2, = ax.plot(hstates2[0], hstates2[1], '-b', marker='o', markersize=.5, lw=0.5, color='blue', label="prediction")
-plt.xlabel('x [m]')
-plt.ylabel('y [m]')
+plt.xlabel(r'$x$ [$\mathrm{m}$]')
+plt.ylabel(r'$y$ [$\mathrm{m}$]')
 plt.legend()
 
 # main simulation loop
@@ -698,105 +698,92 @@ def update(idt):
 
     plt.tight_layout()
 
+    return LnS, LnP, LnH, LnH2
 
 # plots
 
+# Plot model switching performance
 # plot speed
-plt.figure()
+plt.figure(figsize=(6.4, 2.4))
 vel = np.sqrt(dstates[0,:]**2 + dstates[1,:]**2)
-plt.plot(time[:n_steps-horizon], vel[:n_steps-horizon],color="#E5AE1C",linewidth=4, label='Actual')
+plt.plot(time[:n_steps-horizon], ref_speeds,color="#E5AE1C",linewidth=4, label='Reference')
+plt.plot(time[:n_steps-horizon], vel[:n_steps-horizon],color="#0B67B2",linewidth=4, label='Actual')
 # plt.plot(time[:n_steps-horizon], states[3,:n_steps-horizon], label='vx')
 # plt.plot(time[:n_steps-horizon], states[4,:n_steps-horizon], label='vy')
-plt.plot(time[:n_steps-horizon], ref_speeds,color="#0B67B2",linewidth=4, label='Reference')
-plt.xlabel(r'Time (s)')
-plt.ylabel(r'Speed ($\frac{ \mathrm{m} }{\mathrm{s}}$)')
+plt.xlabel(r'Time [$\mathrm{s}$]')
+plt.ylabel(r'Speed [$\frac{ \mathrm{m} }{\mathrm{s}}$]')
 plt.title('Speeds')
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
-plt.savefig(media_dir+'/Speeds.png')
+plt.savefig(media_dir+'/Speeds.png', dpi=1200, bbox_inches="tight")
 
 
 # plot acceleration
 plt.figure()
 plt.plot(time[:n_steps-horizon], inputs[0,:n_steps-horizon],color="#0B67B2",linewidth=4)
-plt.xlabel(r'Time (s)')
+plt.xlabel(r'Time [$\mathrm{s}$]')
 plt.ylabel('PWM duty cycle [-]')
 plt.grid(True)
 plt.tight_layout()
-plt.savefig(media_dir+'/Acc.png')
+plt.savefig(media_dir+'/Acc.png', dpi=1200, bbox_inches="tight")
 
 
 # plot mus
-plt.figure()
-plt.plot(time[:n_steps-horizon],MUs,color="#E5AE1C",linewidth=4, label=r"Actual")
+plt.figure(figsize=(6.4, 2.4))
+plt.plot(time[:n_steps-horizon],MUs,color="#E5AE1C",linewidth=4, label=r"Ground Truth")
 plt.plot(time[:n_steps-horizon],MU_preds,color="#0B67B2",linewidth=4,  label=r"Predicted")
 plt.grid(True)
-plt.xlabel(r'Time (s)')
+plt.xlabel(r'Time [$\mathrm{s}$]')
 plt.ylabel(r'$\mu$')
 plt.legend()
 plt.tight_layout()
-plt.savefig(media_dir+'/MUs.png')
+plt.savefig(media_dir+'/MUs.png', dpi=1200, bbox_inches="tight")
 
 # plot steering angle
 plt.figure()
 plt.plot(time[:n_steps-horizon], inputs[1,:n_steps-horizon],color="#0B67B2",linewidth=4)
-plt.xlabel('time (s)')
-plt.ylabel('Steering (rad)')
+plt.xlabel(r'Time [$\mathrm{s}$]')
+plt.ylabel(r'Steering [$\mathrm{rad}$]')
 plt.grid(True)
 plt.tight_layout()
-plt.savefig(media_dir+'/steering.png')
+plt.savefig(media_dir+'/steering.png', dpi=1200, bbox_inches="tight")
 
 
 # plot inertial heading
 plt.figure()
 plt.plot(time[:n_steps-horizon], states[2,:n_steps-horizon],color="#0B67B2",linewidth=4)
-plt.xlabel('Time (s)')
-plt.ylabel('Orientation (rad)')
+plt.xlabel(r'Time [$\mathrm{s}$]')
+plt.ylabel(r'Orientation [$\mathrm{rad}$]')
 plt.grid(True)
 plt.tight_layout()
-plt.savefig(media_dir+'/orientation.png')
+plt.savefig(media_dir+'/orientation.png', dpi=1200, bbox_inches="tight")
 
 
 plt.figure()
-plt.plot(time[:n_steps-horizon], Dfs[:n_steps-horizon],color="#0B67B2",linewidth=4,linestyle="--", label='Actual Df')
-plt.plot(time[:n_steps-horizon], Drs[:n_steps-horizon],color="#D44A1C",linewidth=4,linestyle="--", label='Actual Dr')
+plt.plot(time[:n_steps-horizon], Dfs[:n_steps-horizon],color="#0B67B2",linewidth=4,linestyle="--", label='Ground Truth Df')
+plt.plot(time[:n_steps-horizon], Drs[:n_steps-horizon],color="#D44A1C",linewidth=4,linestyle="--", label='Ground Truth Dr')
 plt.plot(time[:n_steps-horizon], Dfs_pred[:n_steps-horizon],color="#0B67B2",linewidth=4,linestyle="-", label='Predicted Df')
 plt.plot(time[:n_steps-horizon], Drs_pred[:n_steps-horizon],color="#D44A1C",linewidth=4,linestyle="-", label='Predicted Dr')
-plt.xlabel('time (s)')
-plt.ylabel('mu*N [N]')
+plt.xlabel(r'Time [$\mathrm{s}$]')
+plt.ylabel(r'$\mu$ $\mathrm{N}$ [$\mathrm{N}$]')
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
-plt.savefig(media_dir+'/Ds.png')
+plt.savefig(media_dir+'/Ds.png', dpi=1200, bbox_inches="tight")
 
-# **Set up Matplotlib Animation**
+
 fps = 30
 interval = 1000 / fps  # Convert fps to milliseconds
 
-# ani = animation.FuncAnimation(fig_track, update, frames=n_steps-horizon, interval=interval)
+import matplotlib.animation as animation
 
-
-# Create a directory to store frames
-image_dir = f"{media_dir}/frames"
-os.makedirs(image_dir, exist_ok=True)
-
-# Save frames as PNG images
-for i in range(n_steps - horizon):
-    update(i)  # Render the frame
-    fig_track.savefig(f"{image_dir}/frame_{i:04d}.jpg", dpi=80, quality=85)  # Save as JPEG
-
-print("✅ Frames saved, now creating video...")
-
-# FFmpeg command
-
-# Run FFmpeg
+ani = animation.FuncAnimation(fig_track, update, frames=n_steps-horizon, interval=interval, blit=True)
 
 video_path = f"{media_dir}/output_video.mp4"
 
-ffmpeg_cmd = f"ffmpeg -framerate {fps} -i {image_dir}/frame_%04d.jpg -c:v h264_videotoolbox -b:v 5000k -pix_fmt yuv420p {video_path}"
-subprocess.run(ffmpeg_cmd, shell=True)
-
+# ani.save(video_path, fps=30, extra_args=['-vcodec', 'h264_videotoolbox', '-b:v', '1000k'])
+ani.save(video_path, fps=30, extra_args=['-vcodec', 'h264_videotoolbox', '-b:v', '4000k', '-preset', 'ultrafast'])
 
 print(f"🎥 Smooth video saved as {video_path}")
 

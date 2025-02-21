@@ -283,7 +283,9 @@ class setupNLP:
 			# track_cost_m += 1.5*((distance_to_center) ** 2) * in_region
 
 			if track_cons:
-				cost_violation += 1e6 * (eps[:,idh].T @ eps[:,idh])
+				# cost_violation += 1e6 * (eps[:,idh].T @ eps[:,idh])
+				cost_violation += 1e4 * (eps[:,idh].T @ eps[:,idh])
+
 
 			constraints = cs.vertcat( constraints, u[:,idh] - params['max_inputs'] )
 			constraints = cs.vertcat( constraints, -u[:,idh] + params['min_inputs'] )
@@ -294,7 +296,7 @@ class setupNLP:
 			if track_cons:
 				constraints = cs.vertcat( constraints, Aineq[2*idh:2*idh+2,:] @ x[:2,idh+1] - bineq[2*idh:2*idh+2,:] - eps[:,idh] )
 
-		cost = cost_tracking + cost_actuation + cost_violation     +  track_cost_m
+		cost = cost_tracking + cost_actuation + cost_violation + track_cost_m
 
 		xvars = cs.vertcat(
 			cs.reshape(x,-1,1),
