@@ -284,7 +284,7 @@ class setupNLP:
 
 			if track_cons:
 				# cost_violation += 1e6 * (eps[:,idh].T @ eps[:,idh])
-				cost_violation += 1e4 * (eps[:,idh].T @ eps[:,idh])
+				cost_violation += 1e1 * (eps[:,idh].T @ eps[:,idh])
 
 
 			constraints = cs.vertcat( constraints, u[:,idh] - params['max_inputs'] )

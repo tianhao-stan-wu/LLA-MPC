@@ -71,6 +71,9 @@ matplotlib.use('Agg')  # Set non-GUI backend before importing pyplot
 # matplotlib.use("pgf")  # Uses a LaTeX-compatible backend
 
 import matplotlib.pylab as pylab
+
+import matplotlib.animation as animation
+
 params = {'legend.fontsize': 'xx-large',
          'axes.labelsize': 'xx-large',
          'axes.titlesize':'xx-large',
@@ -84,12 +87,12 @@ plt.rcParams['text.usetex'] = True
 # CHANGE THIS
 
 SAVE_RESULTS = False
-TRACK_CONS = True
+TRACK_CONS = False
 
 #####################################################################
 # default settings
 
-SIM_TIME = 36
+SIM_TIME = 3
 SAMPLING_TIME = 0.02
 HORIZON = 20
 COST_Q = np.diag([1, 1])
@@ -193,7 +196,7 @@ lap_times = [0.,0.,0.,0.,0.]
 
 # main simulation loop
 for idt in range(n_steps-horizon):
-		
+
 	uprev = inputs[:,idt-1]
 	x0 = states[:,idt]
 	Drs.append(model.Dr)
@@ -233,7 +236,7 @@ for idt in range(n_steps-horizon):
 	end = tm.time()
 	inputs[:,idt] = umpc[:,0]
 	print("iter: {}, cost: {:.5f}, time: {:.2f}".format(idt, fval, end-start))
-	
+
 	# update current position with numerical integration (exact model)
 	x_next, dxdt_next = model.sim_continuous(states[:,idt], inputs[:,idt].reshape(-1,1), [0, Ts])
 	states[:,idt+1] = x_next[:,-1]
@@ -261,8 +264,10 @@ for idt in range(n_steps-horizon):
 
 
 def update(idt):
+    if idt == 0:
+        fig_track.tight_layout()
 
-    ax.set_title(f"Frame {idt}")  # Optional: Add frame counter
+    ax.set_title(f"Time {idt*Ts:.2f}")  # Optional: Add frame counter
 
     # # Get trajectory up to the current frame
     # new_segments = segments[:idt]
@@ -277,26 +282,22 @@ def update(idt):
 
     LnS.set_xdata(states[0, :idt + 1])
     LnS.set_ydata(states[1, :idt + 1])
-    #
+
     # color = cmap(norm(idt))
     # LnS.set_color(color)  # Set color dynamically
 
-    # #
     # # LnR.set_xdata(xref[0,1:])
     # # LnR.set_ydata(xref[1,1:])
-    # #
+
     LnP.set_xdata(states[0, idt] + dims[:, 0] * np.cos(states[2, idt]) - dims[:, 1] * np.sin(states[2, idt]))
     LnP.set_ydata(states[1, idt] + dims[:, 0] * np.sin(states[2, idt]) + dims[:, 1] * np.cos(states[2, idt]))
 
 
-    # #
     LnH.set_xdata(Hs0[idt])
     LnH.set_ydata(Hs1[idt])
 
     LnH2.set_xdata(Hs0_2[idt])
     LnH2.set_ydata(Hs1_2[idt])
-
-    plt.tight_layout()
 
     return LnS, LnP, LnH, LnH2
 
@@ -368,51 +369,22 @@ plt.legend()
 plt.tight_layout()
 plt.savefig(media_dir+'/Ds.png', dpi=1200, bbox_inches="tight")
 
-
-fps = 30
+fps = 50
 interval = 1000 / fps  # Convert fps to milliseconds
-
-import matplotlib.animation as animation
-
 ani = animation.FuncAnimation(fig_track, update, frames=n_steps-horizon, interval=interval, blit=True)
-
 video_path = f"{media_dir}/output_video.mp4"
-
-# ani.save(video_path, fps=30, extra_args=['-vcodec', 'h264_videotoolbox', '-b:v', '1000k'])
-ani.save(video_path, fps=30, extra_args=['-vcodec', 'h264_videotoolbox', '-b:v', '4000k', '-preset', 'ultrafast'])
-
+# fig_track.tight_layout()
+ani.save(video_path, fps=fps, extra_args=['-vcodec', 'h264_videotoolbox', '-b:v', '4000k', '-preset', 'ultrafast'])
 print(f"🎥 Smooth video saved as {video_path}")
 
-
-# # **Set up Matplotlib Animation**
-# fps = 30
-# interval = 1000 / fps  # Convert fps to milliseconds
-#
-# # ani = animation.FuncAnimation(fig_track, update, frames=n_steps-horizon, interval=interval)
-#
-#
-# # Create a directory to store frames
-# image_dir = f"{media_dir}/frames"
-# os.makedirs(image_dir, exist_ok=True)
-#
-# # Save frames as PNG images
-# for i in range(n_steps - horizon):
-#     update(i)  # Render the frame
-#     fig_track.savefig(f"{image_dir}/frame_{i:04d}.jpg", dpi=80, quality=85)  # Save as JPEG
-#
-# print("✅ Frames saved, now creating video...")
-#
-# # FFmpeg command
-#
-# # Run FFmpeg
-#
-# video_path = f"{media_dir}/output_video.mp4"
-#
-# ffmpeg_cmd = f"ffmpeg -framerate {fps} -i {image_dir}/frame_%04d.jpg -c:v h264_videotoolbox -b:v 5000k -pix_fmt yuv420p {video_path}"
-# subprocess.run(ffmpeg_cmd, shell=True)
-#
-#
-# print(f"🎥 Smooth video saved as {video_path}")
+fig_track = track.plot(color='k', grid=False)
+plt.plot(track.x_raceline, track.y_raceline, '--k', alpha=0.5, lw=0.5)
+plt.plot(states[0,:-(horizon)], states[1,:-(horizon)],color="#4B0082",linewidth=3,linestyle="-")
+plt.xlabel(r'$x$ [$\mathrm{m}$]')
+plt.ylabel(r'$y$ [$\mathrm{m}$]')
+# plt.legend()
+plt.tight_layout()
+plt.savefig(media_dir+'/Traj.png', dpi=1200, bbox_inches="tight")
 
 for i in range(len(lap_times)-1,0,-1) :
 	if lap_times[i] != 0. :

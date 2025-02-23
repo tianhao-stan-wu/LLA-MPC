@@ -58,6 +58,7 @@ matplotlib.use('Agg')  # Set non-GUI backend before importing pyplot
 # matplotlib.use("pgf")  # Uses a LaTeX-compatible backend
 
 import matplotlib.pylab as pylab
+import matplotlib.animation as animation
 
 
 
@@ -654,6 +655,7 @@ for idt in range(n_steps-horizon):
 
 	alpha_f_max = min(0.6,max(np.abs(alpha_f_curr),alpha_f_max))
 	alpha_r_max = min(0.6,max(np.abs(alpha_r_curr),alpha_r_max))
+
 	alpha_f = torch.tensor(np.arange(-alpha_f_max,alpha_f_max,0.01)).unsqueeze(1)
 	Ffy_pred = model_.Fy(alpha_f)[:,0].detach().numpy()
 	Ffy_true = params['Df']*torch.sin(params['Cf']*torch.atan(params['Bf']*alpha_f))
@@ -681,8 +683,10 @@ for idt in range(n_steps-horizon):
 
 
 def update(idt):
+    if idt == 0:
+        fig_track.tight_layout()
 
-    ax.set_title(f"Frame {idt}")  # Optional: Add frame counter
+    ax.set_title(f"Time {idt*Ts:.2f}")  # Optional: Add frame counter
 
     LnS.set_xdata(states[0, :idt + 1])
     LnS.set_ydata(states[1, :idt + 1])
@@ -695,8 +699,6 @@ def update(idt):
 
     LnH2.set_xdata(Hs0_2[idt])
     LnH2.set_ydata(Hs1_2[idt])
-
-    plt.tight_layout()
 
     return LnS, LnP, LnH, LnH2
 
@@ -772,20 +774,22 @@ plt.legend()
 plt.tight_layout()
 plt.savefig(media_dir+'/Ds.png', dpi=1200, bbox_inches="tight")
 
-
 fps = 30
 interval = 1000 / fps  # Convert fps to milliseconds
-
-import matplotlib.animation as animation
-
 ani = animation.FuncAnimation(fig_track, update, frames=n_steps-horizon, interval=interval, blit=True)
-
 video_path = f"{media_dir}/output_video.mp4"
-
-# ani.save(video_path, fps=30, extra_args=['-vcodec', 'h264_videotoolbox', '-b:v', '1000k'])
-ani.save(video_path, fps=30, extra_args=['-vcodec', 'h264_videotoolbox', '-b:v', '4000k', '-preset', 'ultrafast'])
-
+# fig_track.tight_layout()
+ani.save(video_path, fps=fps, extra_args=['-vcodec', 'h264_videotoolbox', '-b:v', '2000k', '-preset', 'ultrafast'])
 print(f"🎥 Smooth video saved as {video_path}")
+
+fig_track = track.plot(color='k', grid=False)
+plt.plot(track.x_raceline, track.y_raceline, '--k', alpha=0.5, lw=0.5)
+plt.plot(states[0,:-(horizon)], states[1,:-(horizon)],color="#4B0082",linewidth=3,linestyle="-")
+plt.xlabel(r'$x$ [$\mathrm{m}$]')
+plt.ylabel(r'$y$ [$\mathrm{m}$]')
+# plt.legend()
+plt.tight_layout()
+plt.savefig(media_dir+'/Traj.png', dpi=1200, bbox_inches="tight")
 
 # Dist covered, laps completed, Lap 0 time, Lap 1 time, Lap 2 time, Lap 3 time, Lap 4 time, Mean deviation, Track boundary violation time 
 for i in range(len(lap_times)-1,0,-1) :

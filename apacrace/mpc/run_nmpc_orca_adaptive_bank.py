@@ -85,7 +85,7 @@ model_run = Dynamic(**params)
 #####################################################################
 # Model Bank Setup
 
-N_MODELS = 4  # number of models in the bank
+N_MODELS = 5000  # number of models in the bank
 N_AC_STEPS = 10  # Number of steps to accumulate error
 smoothing_mu = 20 # moving avg for MUs
 smoothing_mu_over_mod = 10 # getting the avg MUs for the best N models
@@ -104,7 +104,10 @@ class ExponentialSmoother:
             self.smooth_value = self.alpha * new_value + (1 - self.alpha) * self.smooth_value
         return self.smooth_value  # Return smoothed value
 
-smoother = ExponentialSmoother(alpha=0.2)
+# tune it!!!!!!!!!!!
+# 0.2 for sudden is good (but osc.). 0.03 is smooth but slower. 0.06 is faster a lil bit.
+
+smoother = ExponentialSmoother(alpha=0.04)
 
 
 def find_closest_point(x, y, raceline):
@@ -274,7 +277,7 @@ W = .05
 dims = np.array([[-H/2.,-W/2.],[-H/2.,W/2.],[H/2.,W/2.],[H/2.,-W/2.],[-H/2.,-W/2.]])
 
 fig_track = track.plot(color='k', grid=False)
-fig_track.set_dpi(80)
+fig_track.set_dpi(50)
 plt.plot(track.x_raceline, track.y_raceline, '--k', alpha=0.5, lw=0.5)
 ax = plt.gca()
 LnS, = ax.plot(states[0,0], states[1,0], '#4B0082', label='Trajectory',alpha=0.65)
@@ -459,8 +462,11 @@ for idt in range(n_steps-horizon):
 # ax.add_collection(lc)
 
 def update(idt):
+    if idt == 0:
+        fig_track.tight_layout()
 
-    ax.set_title(f"Frame {idt}")  # Optional: Add frame counter
+    seconds = (idt*Ts) % 60  # Keep seconds in base 60
+    ax.set_title(f"Time {seconds:06.2f}")
 
     # # Get trajectory up to the current frame
     # new_segments = segments[:idt]
@@ -494,24 +500,99 @@ def update(idt):
     LnH2.set_xdata(Hs0_2[idt])
     LnH2.set_ydata(Hs1_2[idt])
 
-    plt.tight_layout()
-
     return LnS, LnP, LnH, LnH2
 
 
-# plots
+# Create binary grid visualization of model switching
+plt.figure(figsize=(6.4, 2.4))
 
-# Plot model switching performance
-plt.figure()
-plt.plot(np.array(model_switches)*Ts, chosen_models, 'bx-')
-plt.xlabel('Time step')
-plt.ylabel('Chosen model index')
-plt.title('Model Switching')
-plt.xlim(0,SIM_TIME)
-plt.ylim(0,N_MODELS)
-plt.grid(True)
+# Create time bins
+time_steps = int(SIM_TIME / Ts)
+model_usage = np.ones((N_MODELS, time_steps))
+
+# Line thickness (number of rows to fill)
+thickness = 12  # Adjust this value to make lines thicker or thinner
+
+# Fill in the grid
+for t in range(time_steps):
+    if t in np.array(model_switches):
+        idx = model_switches.index(t)
+        # Fill current model and adjacent rows
+        for offset in range(-thickness // 2, thickness // 2 + 1):
+            row = chosen_models[idx] + offset
+            if 0 <= row < N_MODELS:  # Make sure we stay within bounds
+                model_usage[row, t:] = 0
+
+        # Clear previous model's usage
+        if idx > 0:
+            prev_model = chosen_models[idx - 1]
+            for offset in range(-thickness // 2, thickness // 2 + 1):
+                row = prev_model + offset
+                if 0 <= row < N_MODELS:
+                    model_usage[row, t:] = 1
+
+# Plot the binary grid
+plt.imshow(model_usage,
+           aspect='auto',
+           cmap='binary',
+           extent=[0, SIM_TIME, -0.5, N_MODELS - 0.5],
+           interpolation='none')
+
+# Customize colorbar
+cbar = plt.colorbar()
+cbar.set_ticks([0, 1])
+cbar.set_ticklabels(['Chosen', 'Not Chosen'])
+
+plt.xlabel(r'Time [$\mathrm{s}$]')
+plt.ylabel('Model Index')
 plt.tight_layout()
-plt.savefig(media_dir+'/Switching.png')
+plt.savefig(media_dir + '/Switching_Grid.png', dpi=1200)
+
+# # Create binary grid visualization of model switching
+# plt.figure(figsize=(6.4, 2.4))
+#
+# # Create time bins
+# time_steps = int(SIM_TIME/Ts)
+# model_usage = np.zeros((N_MODELS, time_steps))
+#
+# # Fill in the grid
+# for t in range(time_steps):
+#     if t in np.array(model_switches):
+#         idx = model_switches.index(t)
+#         model_usage[chosen_models[idx], t:] = 1
+#         # Clear previous model's usage
+#         if idx > 0:
+#             model_usage[chosen_models[idx-1], t:] = 0
+#
+# # Plot the binary grid
+# plt.imshow(model_usage,
+#            aspect='auto',
+#            cmap='binary',  # black and white colormap
+#            extent=[0, SIM_TIME, -0.5, N_MODELS-0.5],
+#            interpolation='none')  # no interpolation for sharp pixels
+#
+# # Customize colorbar
+# cbar = plt.colorbar()
+# cbar.set_ticks([0, 1])
+# cbar.set_ticklabels(['Choosen', 'Not Choosen'])
+#
+# plt.xlabel(r'Time [$\mathrm{s}$]')
+# plt.ylabel('Model Index')
+# # plt.grid(True, alpha=0.3)
+# plt.tight_layout()
+# plt.savefig(media_dir+'/Switching_Grid.png', dpi=1200)  # Higher DPI for sharper image
+
+# # Plot model switching performance
+# plt.figure()
+# plt.plot(np.array(model_switches)*Ts, chosen_models, marker='x',linestyle='None', color="#0B67B2")
+# plt.xlabel(r'Time [$\mathrm{s}$]')
+# plt.ylabel('Chosen model index')
+# plt.title('Model Switching')
+# plt.xlim(0,SIM_TIME)
+# plt.ylim(-1,N_MODELS+1)
+# plt.grid(True)
+# plt.tight_layout()
+# plt.savefig(media_dir+'/Switching.png')
 
 # plot speed
 plt.figure(figsize=(6.4, 2.4))
@@ -522,7 +603,6 @@ plt.plot(time[:n_steps-horizon], vel[:n_steps-horizon],color="#0B67B2",linewidth
 # plt.plot(time[:n_steps-horizon], states[4,:n_steps-horizon], label='vy')
 plt.xlabel(r'Time [$\mathrm{s}$]')
 plt.ylabel(r'Speed [$\frac{ \mathrm{m} }{\mathrm{s}}$]')
-plt.title('Speeds')
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
@@ -582,31 +662,25 @@ plt.legend()
 plt.tight_layout()
 plt.savefig(media_dir+'/Ds.png', dpi=1200, bbox_inches="tight")
 
-plt.figure()
-plt.plot(states[0,:], states[1,:],color="#4B0082",linewidth=3,linestyle="-")
-plt.xlabel(r'$x$')
-plt.ylabel(r'$y$')
-plt.grid(True)
-plt.legend()
-plt.tight_layout()
+fig_track = track.plot(color='k', grid=False)
+plt.plot(track.x_raceline, track.y_raceline, '--k', alpha=0.5, lw=0.5)
+plt.plot(states[0,:-(horizon)], states[1,:-(horizon)],color="#4B0082",linewidth=3,linestyle="-")
+plt.xlabel(r'$x$ [$\mathrm{m}$]')
+plt.ylabel(r'$y$ [$\mathrm{m}$]')
+# plt.legend()
+fig_track.tight_layout()
 plt.savefig(media_dir+'/Traj.png', dpi=1200, bbox_inches="tight")
-
-fps = 30
-interval = 1000 / fps  # Convert fps to milliseconds
-
-import matplotlib.animation as animation
-
-ani = animation.FuncAnimation(fig_track, update, frames=n_steps-horizon, interval=interval, blit=True)
-
-video_path = f"{media_dir}/output_video.mp4"
-
-# ani.save(video_path, fps=30, extra_args=['-vcodec', 'h264_videotoolbox', '-b:v', '1000k'])
-ani.save(video_path, fps=30, extra_args=['-vcodec', 'h264_videotoolbox', '-b:v', '4000k', '-preset', 'ultrafast'])
-
-print(f"🎥 Smooth video saved as {video_path}")
 
 
 for i in range(len(lap_times)-1,0,-1) :
 	if lap_times[i] != 0. :
 		lap_times[i] = lap_times[i] - lap_times[i-1]
 print(lap_times)
+
+fps = 50
+interval = 1000 / fps  # Convert fps to milliseconds
+ani = animation.FuncAnimation(fig_track, update, frames=n_steps-horizon, interval=interval, blit=True)
+video_path = f"{media_dir}/traj_video.mp4"
+# fig_track.tight_layout()
+ani.save(video_path, fps=fps, extra_args=['-vcodec', 'h264_videotoolbox', '-b:v', '4000k', '-preset', 'ultrafast'])
+print(f"🎥 Smooth video saved as {video_path}")
