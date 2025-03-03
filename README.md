@@ -1,7 +1,7 @@
 # Look-Back and Look-Ahead Adaptive Model Predictive Control (LLA-MPC)
 
 
-/* 
+<!--
 
 Code for Adaptive Planning and Control with Time-Varying Tire Models for Autonomous Racing Using Extreme Learning Machine ([Website](https://dvij542.github.io/apacrace/)) ([Paper](https://arxiv.org/abs/2303.08235))
 NOTE: Well formatted and cleaned version of the code will be available soon
@@ -128,4 +128,4 @@ The following steps are explained for the [1:43 scale autonomous racing platform
 	<img src="https://github.com/jainachin/bayesrace/blob/master/bayes_race/mpc/track_mpc_lap1.png" width="400" />
 	</p> -->
 
-*/
+ -->
