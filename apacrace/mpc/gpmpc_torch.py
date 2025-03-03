@@ -361,4 +361,11 @@ class setupNLP:
 		umpc = res['x'][n_states*(horizon+1):n_states*(horizon+1)+n_inputs*horizon].full().reshape(horizon,n_inputs).T
 		# if res['cost'] > 10. :
 		# print(xmpc[3:6,:])
-		return umpc, fval, xmpc
+		violation = 0
+		if track_cons:
+			eps_start = n_states * (horizon + 1) + n_inputs * horizon
+			eps = res['x'][eps_start:eps_start + 2 * horizon].full().reshape(2, horizon)
+			violation = np.sum(eps ** 2)
+
+
+		return umpc, fval, xmpc, ((violation>1e-10)*0.02)

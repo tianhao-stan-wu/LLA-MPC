@@ -159,15 +159,15 @@ class Track:
 		optxy = proj[:,optidx]
 		return optxy, optidx
 
-	def _plot(self, color='g', grid=True, figsize=(6.4, 4.8)):
+	def _plot(self, color='k', grid=True, figsize=(6.4, 4.8)):
 		""" plot center, inner and outer track lines
 		"""
 		fig = plt.figure(figsize=figsize)
 		plt.grid(grid)
 		# plt.plot(self.x_center, self.y_center, '--'+color, lw=0.75, alpha=0.5)
-		plt.plot(self.x_outer, self.y_outer, color, lw=0.75, alpha=0.5)
-		plt.plot(self.x_inner, self.y_inner, color, lw=0.75, alpha=0.5)
-		plt.scatter(0, 0, color='k', alpha=0.2)
+		plt.plot(self.x_outer, self.y_outer, color, lw=1.6)
+		plt.plot(self.x_inner, self.y_inner, color, lw=1.6)
+		# plt.scatter(0, 0, color='k', alpha=0.2)
 		plt.axis('equal')
 		return fig
 

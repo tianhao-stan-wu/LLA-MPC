@@ -3,6 +3,7 @@
 
 __author__ = 'Maitham AL-Sunni'
 __email__ = 'maitham@cmu.edu'
+from apacrace.mpc.constraints import Boundary
 
 import time as tm
 import numpy as np
@@ -11,6 +12,9 @@ import _pickle as pickle
 
 import matplotlib
 from matplotlib.lines import lineStyles
+
+violation_total = []
+
 
 matplotlib.use('Agg')  # Set non-GUI backend before importing pyplot
 # matplotlib.use("pgf")  # Uses a LaTeX-compatible backend
@@ -27,7 +31,7 @@ from joblib import Parallel, delayed
 
 from apacrace.params import ORCA
 from apacrace.models import Dynamic
-from apacrace.tracks import ETHZ
+from apacrace.tracks import ETHZ, ETHZMobil
 from apacrace.mpc.planner import ConstantSpeed
 from apacrace.mpc.nmpc import setupNLP
 import multiprocessing as mp
@@ -35,6 +39,11 @@ from apacrace.mpc.evaluate_models_vectorized import evaluate_models_vectorized
 import os
 import imageio
 import copy
+
+import matplotlib.colors as colors
+from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.collections import LineCollection
+
 
 import matplotlib.pylab as pylab
 params = {'legend.fontsize': 'xx-large',
@@ -61,7 +70,7 @@ TRACK_CONS = False
 
 #####################################################################
 # default settings
-SIM_TIME = 36
+SIM_TIME = 28
 SAMPLING_TIME = 0.02
 HORIZON = 20
 COST_Q = np.diag([1, 1])
@@ -107,7 +116,7 @@ class ExponentialSmoother:
 # tune it!!!!!!!!!!!
 # 0.2 for sudden is good (but osc.). 0.03 is smooth but slower. 0.06 is faster a lil bit.
 
-smoother = ExponentialSmoother(alpha=0.04)
+smoother = ExponentialSmoother(alpha=0.08)
 
 
 def find_closest_point(x, y, raceline):
@@ -122,15 +131,14 @@ def find_closest_point(x, y, raceline):
 
 def update_friction(Df,Dr,curr_time,style='const_decay') :
     if style is 'const_decay' :
-        # if curr_time > 6.2 :
-        if curr_time > 14.3 :
+        if curr_time > 5:
             Df -= Df/2600.
             Dr -= Dr/2600.
     elif style is 'sudden' :
-        if curr_time > 14.3 and curr_time < 14.5:
+        if curr_time > 5 and curr_time < 5.2:
         # if curr_time > 10 and curr_time < 10.2:
-            Df -= Df/13.
-            Dr -= Dr/13.
+            Df -= Df/22.
+            Dr -= Dr/22.
     elif style is 'no_change' :
         return Df, Dr
     return Df, Dr
@@ -194,7 +202,7 @@ params_pass = (Bfs_pass, Cfs_pass, Dfs_pass, Brs_pass, Crs_pass, Drs_pass)
 # load track
 
 TRACK_NAME = 'ETHZ'
-track = ETHZ(reference='optimal', longer=True)
+track = ETHZMobil(reference='optimal', longer=True)
 
 #####################################################################
 # extract data
@@ -213,6 +221,7 @@ window_count = 0
 print("Setting up NLP solvers for all models...")
 nlp_bank = []
 for i in range(N_MODELS):
+    print("setting up NLP # {}".format(i))
     nlp = setupNLP(horizon, Ts, COST_Q, COST_P, COST_R,
                   MODEL_PARAMS[i],
                   MODEL_BANK[i],
@@ -315,7 +324,8 @@ for idt in range(n_steps-horizon):
     ref_speeds.append(v)
     fval_history.append(find_closest_point(x0[0], x0[1], track.raceline)[-1])
 
-    if projidx > 656:
+    # if projidx > 656:
+    if projidx > 440:
         if laps_completed > 0:
             lap_times[laps_completed] = idt * Ts
             print(lap_times)
@@ -354,7 +364,7 @@ for idt in range(n_steps-horizon):
     else:
         nlp = nlp_bank[current_model_idx]
 
-    umpc, fval, xmpc = nlp.solve(x0=x0, xref=xref[:2,:], uprev=uprev)
+    umpc, fval, xmpc, violation = nlp.solve(x0=x0, xref=xref[:2,:], uprev=uprev)
 
     inputs[:,idt] = umpc[:,0]
     uprev = inputs[:,idt]  # Update uprev for next iteration
@@ -368,6 +378,10 @@ for idt in range(n_steps-horizon):
 
     # update current position with numerical integration (exact model)
     x_next, dxdt_next = model.sim_continuous(states[:,idt], inputs[:,idt].reshape(-1,1), [0, Ts])
+    Ain, bin = Boundary(np.array(x_next[:2, -1]), track)
+    flag = (np.array(Ain @ np.array(x_next[:2, -1])).T > np.array(np.array([bin[0][0], bin[1][0]]))).any()
+    violation_total.append(flag * 0.02)
+
     states[:,idt+1] = x_next[:,-1]
     dstates[:,idt+1] = dxdt_next[:,-1]
     Ffy[idt+1], Frx[idt+1], Fry[idt+1] = model.calc_forces(states[:,idt], inputs[:,idt])
@@ -395,6 +409,8 @@ for idt in range(n_steps-horizon):
         Drs_preds.append(np.mean(bestKDr))
         Dfs_preds.append(np.mean(bestKDf))
         MU_pred = copy.deepcopy(np.mean(np.array(Drs_preds)[-smoothing_mu:])  + np.mean(np.array(Dfs_preds)[-smoothing_mu:]) ) / (9.81 * params['mass'])
+
+        # .95 workes perfectly.
         MU_preds.append(smoother.update(MU_pred)*.95)
 
     # In your main loop:
@@ -609,14 +625,47 @@ plt.tight_layout()
 plt.savefig(media_dir+'/Speeds.png', dpi=1200, bbox_inches="tight")
 
 
-# plot acceleration
-plt.figure()
-plt.plot(time[:n_steps-horizon], inputs[0,:n_steps-horizon],color="#0B67B2",linewidth=4)
-plt.xlabel(r'Time [$\mathrm{s}$]')
-plt.ylabel('PWM duty cycle [-]')
-plt.grid(True)
-plt.tight_layout()
-plt.savefig(media_dir+'/Acc.png', dpi=1200, bbox_inches="tight")
+
+# Create the track plot
+fig_track = track.plot(color='k', grid=False)
+# Create a custom colormap that goes from blue to purple to red to yellow
+# This should match the reference image better
+colors_list = ['navy', 'blue', 'orange','yellow']
+custom_cmap = LinearSegmentedColormap.from_list("custom_speed", colors_list)
+# Normalize velocity values for colormapping
+norm = colors.Normalize(vmin=np.min(vel[:n_steps-horizon]),
+                        vmax=np.max(vel[:n_steps-horizon]))
+# Plot trajectory with changing colors based on velocity
+points = np.array([states[0,:-(horizon)], states[1,:-(horizon)]]).T.reshape(-1, 1, 2)
+segments = np.concatenate([points[:-1], points[1:]], axis=1)
+# Create a LineCollection with the colored segments
+lc = LineCollection(segments, cmap=custom_cmap, norm=norm, linewidth=1.5, alpha=0.5)
+lc.set_array(vel[:n_steps-horizon-1])
+plt.gca().add_collection(lc)
+# Add a colorbar
+sm = plt.cm.ScalarMappable(cmap=custom_cmap, norm=norm)
+sm.set_array([])
+cbar = plt.colorbar(sm, orientation='vertical')
+cbar.set_label(r'Speed [${ \mathrm{m} }/{\mathrm{s}}$]')
+# Remove axes, ticks, and frame
+ax.set_axis_off()
+plt.axis('equal')
+plt.axis('off')
+
+# Remove the figure border
+fig_track.tight_layout(pad=0)
+fig_track.subplots_adjust(left=0, right=.8, top=1, bottom=0)
+plt.savefig(media_dir+'/Traj_Velocity.png', dpi=1200, bbox_inches="tight")
+
+
+# # plot acceleration
+# plt.figure()
+# plt.plot(time[:n_steps-horizon], inputs[0,:n_steps-horizon],color="#0B67B2",linewidth=4)
+# plt.xlabel(r'Time [$\mathrm{s}$]')
+# plt.ylabel('PWM duty cycle [-]')
+# plt.grid(True)
+# plt.tight_layout()
+# plt.savefig(media_dir+'/Acc.png', dpi=1200, bbox_inches="tight")
 
 
 # plot mus
@@ -630,57 +679,62 @@ plt.legend()
 plt.tight_layout()
 plt.savefig(media_dir+'/MUs.png', dpi=1200, bbox_inches="tight")
 
-# plot steering angle
-plt.figure()
-plt.plot(time[:n_steps-horizon], inputs[1,:n_steps-horizon],color="#0B67B2",linewidth=4)
-plt.xlabel(r'Time [$\mathrm{s}$]')
-plt.ylabel(r'Steering [$\mathrm{rad}$]')
-plt.grid(True)
-plt.tight_layout()
-plt.savefig(media_dir+'/steering.png', dpi=1200, bbox_inches="tight")
+np.save(media_dir+'/Time.npy', time[:n_steps-horizon])
+np.save(media_dir+'/MUs.npy', MUs)
+np.save(media_dir+'/MU_preds.npy', MU_preds)
+
+# # plot steering angle
+# plt.figure()
+# plt.plot(time[:n_steps-horizon], inputs[1,:n_steps-horizon],color="#0B67B2",linewidth=4)
+# plt.xlabel(r'Time [$\mathrm{s}$]')
+# plt.ylabel(r'Steering [$\mathrm{rad}$]')
+# plt.grid(True)
+# plt.tight_layout()
+# plt.savefig(media_dir+'/steering.png', dpi=1200, bbox_inches="tight")
 
 
-# plot inertial heading
-plt.figure()
-plt.plot(time[:n_steps-horizon], states[2,:n_steps-horizon],color="#0B67B2",linewidth=4)
-plt.xlabel(r'Time [$\mathrm{s}$]')
-plt.ylabel(r'Orientation [$\mathrm{rad}$]')
-plt.grid(True)
-plt.tight_layout()
-plt.savefig(media_dir+'/orientation.png', dpi=1200, bbox_inches="tight")
+# # plot inertial heading
+# plt.figure()
+# plt.plot(time[:n_steps-horizon], states[2,:n_steps-horizon],color="#0B67B2",linewidth=4)
+# plt.xlabel(r'Time [$\mathrm{s}$]')
+# plt.ylabel(r'Orientation [$\mathrm{rad}$]')
+# plt.grid(True)
+# plt.tight_layout()
+# plt.savefig(media_dir+'/orientation.png', dpi=1200, bbox_inches="tight")
 
 
-plt.figure()
-plt.plot(time[:n_steps-horizon], Dfs[:n_steps-horizon],color="#0B67B2",linewidth=4,linestyle="--", label='Ground Truth Df')
-plt.plot(time[:n_steps-horizon], Drs[:n_steps-horizon],color="#D44A1C",linewidth=4,linestyle="--", label='Ground Truth Dr')
-plt.plot(time[:n_steps-horizon], Dfs_preds[:n_steps-horizon],color="#0B67B2",linewidth=4,linestyle="-", label='Predicted Df')
-plt.plot(time[:n_steps-horizon], Drs_preds[:n_steps-horizon],color="#D44A1C",linewidth=4,linestyle="-", label='Predicted Dr')
-plt.xlabel(r'Time [$\mathrm{s}$]')
-plt.ylabel(r'$\mu$ $\mathrm{N}$ [$\mathrm{N}$]')
-plt.grid(True)
-plt.legend()
-plt.tight_layout()
-plt.savefig(media_dir+'/Ds.png', dpi=1200, bbox_inches="tight")
-
-fig_track = track.plot(color='k', grid=False)
-plt.plot(track.x_raceline, track.y_raceline, '--k', alpha=0.5, lw=0.5)
-plt.plot(states[0,:-(horizon)], states[1,:-(horizon)],color="#4B0082",linewidth=3,linestyle="-")
-plt.xlabel(r'$x$ [$\mathrm{m}$]')
-plt.ylabel(r'$y$ [$\mathrm{m}$]')
+# plt.figure()
+# plt.plot(time[:n_steps-horizon], Dfs[:n_steps-horizon],color="#0B67B2",linewidth=4,linestyle="--", label='Ground Truth Df')
+# plt.plot(time[:n_steps-horizon], Drs[:n_steps-horizon],color="#D44A1C",linewidth=4,linestyle="--", label='Ground Truth Dr')
+# plt.plot(time[:n_steps-horizon], Dfs_preds[:n_steps-horizon],color="#0B67B2",linewidth=4,linestyle="-", label='Predicted Df')
+# plt.plot(time[:n_steps-horizon], Drs_preds[:n_steps-horizon],color="#D44A1C",linewidth=4,linestyle="-", label='Predicted Dr')
+# plt.xlabel(r'Time [$\mathrm{s}$]')
+# plt.ylabel(r'$\mu$ $\mathrm{N}$ [$\mathrm{N}$]')
+# plt.grid(True)
 # plt.legend()
-fig_track.tight_layout()
-plt.savefig(media_dir+'/Traj.png', dpi=1200, bbox_inches="tight")
+# plt.tight_layout()
+# plt.savefig(media_dir+'/Ds.png', dpi=1200, bbox_inches="tight")
+
+# fig_track = track.plot(color='k', grid=False)
+# plt.plot(track.x_raceline, track.y_raceline, '--k', alpha=0.5, lw=0.5)
+# plt.plot(states[0,:-(horizon)], states[1,:-(horizon)],color="#4B0082",linewidth=3,linestyle="-")
+# plt.xlabel(r'$x$ [$\mathrm{m}$]')
+# plt.ylabel(r'$y$ [$\mathrm{m}$]')
+# # plt.legend()
+# fig_track.tight_layout()
+# plt.savefig(media_dir+'/Traj.png', dpi=1200, bbox_inches="tight")
 
 
 for i in range(len(lap_times)-1,0,-1) :
 	if lap_times[i] != 0. :
 		lap_times[i] = lap_times[i] - lap_times[i-1]
 print(lap_times)
+print("lap times:",lap_times, "violation: ",np.sum(violation_total), "mean_dev", np.mean(fval_history))
 
-fps = 50
-interval = 1000 / fps  # Convert fps to milliseconds
-ani = animation.FuncAnimation(fig_track, update, frames=n_steps-horizon, interval=interval, blit=True)
-video_path = f"{media_dir}/traj_video.mp4"
-# fig_track.tight_layout()
-ani.save(video_path, fps=fps, extra_args=['-vcodec', 'h264_videotoolbox', '-b:v', '4000k', '-preset', 'ultrafast'])
-print(f"🎥 Smooth video saved as {video_path}")
+# fps = 50
+# interval = 1000 / fps  # Convert fps to milliseconds
+# ani = animation.FuncAnimation(fig_track, update, frames=n_steps-horizon, interval=interval, blit=True)
+# video_path = f"{media_dir}/traj_video.mp4"
+# # fig_track.tight_layout()
+# ani.save(video_path, fps=fps, extra_args=['-vcodec', 'h264_videotoolbox', '-b:v', '4000k', '-preset', 'ultrafast'])
+# print(f"🎥 Smooth video saved as {video_path}")
