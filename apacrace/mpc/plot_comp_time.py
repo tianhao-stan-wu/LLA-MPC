@@ -68,7 +68,7 @@ plt.rcParams['text.usetex'] = True
 SAVE_RESULTS = False
 TRACK_CONS = False
 
-TRY_NUMBER = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,25,28,30,31,36,39,41,46,50,55,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200]
+TRY_NUMBER = [13000, 17000, 20000]
 
 # [10,20,50,100,200,500, 1000,2000, 5000,7000, 10000, 13000, 17000, 20000]
 # [661.0740749916712, 2.890062586436497, 2.41373026456313, 1.4512580905582904, 5.614346282985414, 0.49434555995796703, 4.26127182873454, 0.2552100753730031, 0.3305713537493328, 0.3702475039674126, 6.608940794627171, 0.4201741687532871, 0.369022503440102, 0.0911624836739262]]
@@ -77,8 +77,8 @@ AVGs = []
 SUMs = []
 
 COSTS = []
-for WIND in TRY_NUMBER:
-    print("now trying: ", WIND)
+for N_MODELS in TRY_NUMBER:
+    print("now trying: ", N_MODELS)
     choosen_errors = []
     COST_ALL = []
     #####################################################################
@@ -107,8 +107,8 @@ for WIND in TRY_NUMBER:
     #####################################################################
     # Model Bank Setup
 
-    N_MODELS = 30000  # number of models in the bank
-    N_AC_STEPS = WIND  # Number of steps to accumulate error
+    N_MODELS = N_MODELS  # number of models in the bank
+    N_AC_STEPS = 10  # Number of steps to accumulate error
     smoothing_mu = 20 # moving avg for MUs
     smoothing_mu_over_mod = 10 # getting the avg MUs for the best N models
     v_factor = .9
@@ -217,7 +217,7 @@ for WIND in TRY_NUMBER:
     # load track
 
     TRACK_NAME = 'ETHZ'
-    track = ETHZ(reference='optimal', longer=True)
+    track = ETHZMobil(reference='optimal', longer=True)
 
     #####################################################################
     # extract data
@@ -233,7 +233,7 @@ for WIND in TRY_NUMBER:
     window_count = 0
 
     # Setup NLP solvers for all models
-    # print("Setting up NLP solvers for all models...")
+    print("Setting up NLP solvers for all models...")
     # nlp_bank = []
     # for i in range(N_MODELS):
     #     # print("setting up NLP # {}".format(i))
@@ -339,8 +339,8 @@ for WIND in TRY_NUMBER:
         ref_speeds.append(v)
         fval_history.append(find_closest_point(x0[0], x0[1], track.raceline)[-1])
 
-        if projidx > 656:
-        # if projidx > 440:
+        # if projidx > 656:
+        if projidx > 440:
             if laps_completed > 0:
                 lap_times[laps_completed] = idt * Ts
                 print(lap_times)
@@ -374,13 +374,9 @@ for WIND in TRY_NUMBER:
         #     print(f"Dr: {chosen_model.Dr}")
         #     # nlp = nlp_bank[current_model_idx]
 
-        if idt <= N_AC_STEPS:
-            nlp = nlp_initial
-        else:
-            nlp = nlp = setupNLP(horizon, Ts, COST_Q, COST_P, COST_R,
-                                 MODEL_PARAMS[current_model_idx],
-                                 MODEL_BANK[current_model_idx],
-                                 track, track_cons=TRACK_CONS)
+        nlp = nlp_initial
+        # else:
+        #     nlp = nlp_bank[current_model_idx]
 
         umpc, fval, xmpc, violation = nlp.solve(x0=x0, xref=xref[:2,:], uprev=uprev)
         COST_ALL.append(fval)

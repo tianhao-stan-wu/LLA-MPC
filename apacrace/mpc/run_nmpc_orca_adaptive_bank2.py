@@ -94,7 +94,7 @@ model_run = Dynamic(**params)
 #####################################################################
 # Model Bank Setup
 
-N_MODELS = 20000  # number of models in the bank
+N_MODELS = 5000  # number of models in the bank
 N_AC_STEPS = 10  # Number of steps to accumulate error
 smoothing_mu = 20 # moving avg for MUs
 smoothing_mu_over_mod = 10 # getting the avg MUs for the best N models
@@ -135,7 +135,7 @@ def update_friction(Df,Dr,curr_time,style='const_decay') :
             Df -= Df/2600.
             Dr -= Dr/2600.
     elif style is 'sudden' :
-        if curr_time > 5 and curr_time < 5.2:
+        if curr_time > 3.3 and curr_time < 3.5:
         # if curr_time > 10 and curr_time < 10.2:
             Df -= Df/22.
             Dr -= Dr/22.
@@ -167,12 +167,12 @@ variation_dict = {
     # 'Cm2': 0.15,         # 15% variation
     # 'Cr0': 0.15,         # 15% variation
     # 'Cr2': 0.15,         # 15% variation
-    'Br': 2.5,          # 15% variation
-    'Cr': 2.5,         # 15% variation
-    'Dr': 2.5,          # 15% variation
-    'Bf': 2.5,          # 15% variation
-    'Cf': 2.5,          # 15% variation
-    'Df': 2.5,          # 15% variation
+    'Br': 1.5,          # 15% variation
+    'Cr': 1.5,         # 15% variation
+    'Dr': 1.5,          # 15% variation
+    'Bf': 1.5,          # 15% variation
+    'Cf': 1.5,          # 15% variation
+    'Df': 1.5,          # 15% variation
 }
 
 fval_history = []
@@ -202,7 +202,7 @@ params_pass = (Bfs_pass, Cfs_pass, Dfs_pass, Brs_pass, Crs_pass, Drs_pass)
 # load track
 
 TRACK_NAME = 'ETHZ'
-track = ETHZMobil(reference='optimal', longer=True)
+track = ETHZ(reference='optimal', longer=True)
 
 #####################################################################
 # extract data
@@ -218,16 +218,16 @@ error_windows = np.zeros((N_MODELS, N_AC_STEPS))
 window_count = 0
 
 # Setup NLP solvers for all models
-print("Setting up NLP solvers for all models...")
-nlp_bank = []
-for i in range(N_MODELS):
-    print("setting up NLP # {}".format(i))
-    nlp = setupNLP(horizon, Ts, COST_Q, COST_P, COST_R,
-                  MODEL_PARAMS[i],
-                  MODEL_BANK[i],
-                  track, track_cons=TRACK_CONS)
-    nlp_bank.append(nlp)
-print("NLP setup complete.")
+# print("Setting up NLP solvers for all models...")
+# nlp_bank = []
+# for i in range(N_MODELS):
+#     print("setting up NLP # {}".format(i))
+#     nlp = setupNLP(horizon, Ts, COST_Q, COST_P, COST_R,
+#                   MODEL_PARAMS[i],
+#                   MODEL_BANK[i],
+#                   track, track_cons=TRACK_CONS)
+#     nlp_bank.append(nlp)
+# print("NLP setup complete.")
 
 # just begainning
 
@@ -325,8 +325,8 @@ for idt in range(n_steps-horizon):
     ref_speeds.append(v)
     fval_history.append(find_closest_point(x0[0], x0[1], track.raceline)[-1])
 
-    # if projidx > 656:
-    if projidx > 440:
+    if projidx > 656:
+    # if projidx > 440:
         if laps_completed > 0:
             lap_times[laps_completed] = idt * Ts
             print(lap_times)
@@ -363,7 +363,10 @@ for idt in range(n_steps-horizon):
     if idt <= N_AC_STEPS:
         nlp = nlp_initial
     else:
-        nlp = nlp_bank[current_model_idx]
+        nlp = setupNLP(horizon, Ts, COST_Q, COST_P, COST_R,
+                  MODEL_PARAMS[current_model_idx],
+                  MODEL_BANK[current_model_idx],
+                  track, track_cons=TRACK_CONS)
 
     umpc, fval, xmpc, violation = nlp.solve(x0=x0, xref=xref[:2,:], uprev=uprev)
 
@@ -379,9 +382,9 @@ for idt in range(n_steps-horizon):
 
     # update current position with numerical integration (exact model)
     x_next, dxdt_next = model.sim_continuous(states[:,idt], inputs[:,idt].reshape(-1,1), [0, Ts])
-    Ain, bin = Boundary(np.array(x_next[:2, -1]), track)
-    flag = (np.array(Ain @ np.array(x_next[:2, -1])).T > np.array(np.array([bin[0][0], bin[1][0]]))).any()
-    violation_total.append(flag * 0.02)
+    # Ain, bin = Boundary(np.array(x_next[:2, -1]), track)
+    # flag = (np.array(Ain @ np.array(x_next[:2, -1])).T > np.array(np.array([bin[0][0], bin[1][0]]))).any()
+    # violation_total.append(flag * 0.02)
 
     states[:,idt+1] = x_next[:,-1]
     dstates[:,idt+1] = dxdt_next[:,-1]
@@ -417,6 +420,7 @@ for idt in range(n_steps-horizon):
     # In your main loop:
     if idt > 0:
         # Calculate errors for all models at once
+
         errors = np.mean((evaluate_models_vectorized(MODEL_BANK, N_MODELS, states[:, idt], inputs[:, idt], Ts, params_pass) - states[0:4, idt + 1]) ** 2, axis=1)
 
         # Update error windows using numpy operations

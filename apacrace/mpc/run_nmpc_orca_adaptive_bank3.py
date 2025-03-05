@@ -68,47 +68,36 @@ plt.rcParams['text.usetex'] = True
 SAVE_RESULTS = False
 TRACK_CONS = False
 
-TRY_NUMBER = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,25,28,30,31,36,39,41,46,50,55,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200]
+#####################################################################
+# default settings
+SIM_TIME = 36
+SAMPLING_TIME = 0.02
+HORIZON = 20
+COST_Q = np.diag([1, 1])
+COST_P = np.diag([0, 0])
+COST_R = np.diag([5/1000, 1])
 
-# [10,20,50,100,200,500, 1000,2000, 5000,7000, 10000, 13000, 17000, 20000]
-# [661.0740749916712, 2.890062586436497, 2.41373026456313, 1.4512580905582904, 5.614346282985414, 0.49434555995796703, 4.26127182873454, 0.2552100753730031, 0.3305713537493328, 0.3702475039674126, 6.608940794627171, 0.4201741687532871, 0.369022503440102, 0.0911624836739262]]
+if not TRACK_CONS:
+    SUFFIX = 'NOCONS-'
+else:
+    SUFFIX = ''
 
-AVGs = []
-SUMs = []
-
-COSTS = []
-for WIND in TRY_NUMBER:
-    print("now trying: ", WIND)
-    choosen_errors = []
-    COST_ALL = []
-    #####################################################################
-    # default settings
-    SIM_TIME = 10
-    SAMPLING_TIME = 0.02
-    HORIZON = 20
-    COST_Q = np.diag([1, 1])
-    COST_P = np.diag([0, 0])
-    COST_R = np.diag([5/1000, 1])
-
-    if not TRACK_CONS:
-        SUFFIX = 'NOCONS-'
-    else:
-        SUFFIX = ''
-
-    #####################################################################
-    # load vehicle parameters
+ALL_TRYS = []
+for TRYING in range(10):
+#####################################################################
+# load vehicle parameters
 
     params = ORCA(control='pwm')
     model = Dynamic(**params)
-    # print("check1",id(model))
+    print("check1",id(model))
 
     model_run = Dynamic(**params)
 
     #####################################################################
     # Model Bank Setup
 
-    N_MODELS = 30000  # number of models in the bank
-    N_AC_STEPS = WIND  # Number of steps to accumulate error
+    N_MODELS = 5000  # number of models in the bank
+    N_AC_STEPS = 10  # Number of steps to accumulate error
     smoothing_mu = 20 # moving avg for MUs
     smoothing_mu_over_mod = 10 # getting the avg MUs for the best N models
     v_factor = .9
@@ -144,11 +133,11 @@ for WIND in TRY_NUMBER:
 
     def update_friction(Df,Dr,curr_time,style='const_decay') :
         if style is 'const_decay' :
-            if curr_time > 0:
+            if curr_time > 14.3:
                 Df -= Df/2600.
                 Dr -= Dr/2600.
         elif style is 'sudden' :
-            if curr_time > 5 and curr_time < 5.2:
+            if curr_time > 3.3 and curr_time < 3.5:
             # if curr_time > 10 and curr_time < 10.2:
                 Df -= Df/22.
                 Dr -= Dr/22.
@@ -180,12 +169,12 @@ for WIND in TRY_NUMBER:
         # 'Cm2': 0.15,         # 15% variation
         # 'Cr0': 0.15,         # 15% variation
         # 'Cr2': 0.15,         # 15% variation
-        'Br': 2,          # 15% variation
-        'Cr': 2,         # 15% variation
-        'Dr': 2,          # 15% variation
-        'Bf': 2,          # 15% variation
-        'Cf': 2,          # 15% variation
-        'Df': 2,          # 15% variation
+        'Br': 1.5,          # 15% variation
+        'Cr': 1.5,         # 15% variation
+        'Dr': 1.5,          # 15% variation
+        'Bf': 1.5,          # 15% variation
+        'Cf': 1.5,          # 15% variation
+        'Df': 1.5,          # 15% variation
     }
 
     fval_history = []
@@ -200,9 +189,7 @@ for WIND in TRY_NUMBER:
                 param_variation[param_name] *= (1 + variation_percentage * np.random.randn())
 
         MODEL_PARAMS.append(param_variation)
-        print(param_variation)
         MODEL_BANK.append(Dynamic(**param_variation))
-    print(params)
 
     Bfs_pass = np.array([m.Bf for m in MODEL_BANK])
     Cfs_pass = np.array([m.Cf for m in MODEL_BANK])
@@ -236,7 +223,7 @@ for WIND in TRY_NUMBER:
     # print("Setting up NLP solvers for all models...")
     # nlp_bank = []
     # for i in range(N_MODELS):
-    #     # print("setting up NLP # {}".format(i))
+    #     print("setting up NLP # {}".format(i))
     #     nlp = setupNLP(horizon, Ts, COST_Q, COST_P, COST_R,
     #                   MODEL_PARAMS[i],
     #                   MODEL_BANK[i],
@@ -248,6 +235,7 @@ for WIND in TRY_NUMBER:
 
     nlp_initial = setupNLP(horizon, Ts, COST_Q, COST_P, COST_R, params, model_run, track, track_cons=TRACK_CONS)
 
+    # nlp_initial = nlp_bank[0]
 
     #####################################################################
     # closed-loop simulation
@@ -289,7 +277,7 @@ for WIND in TRY_NUMBER:
     x_init[3] = track.vx_init
     dstates[0,0] = x_init[3]
     states[:,0] = x_init
-    # print('starting at ({:.1f},{:.1f})'.format(x_init[0], x_init[1]))
+    print('starting at ({:.1f},{:.1f})'.format(x_init[0], x_init[1]))
 
 
     media_dir = "LLA"
@@ -322,7 +310,7 @@ for WIND in TRY_NUMBER:
 
     # main simulation loop
     for idt in range(n_steps-horizon):
-        # print("checkiter", id(model))
+        print("checkiter", id(model))
         x0 = states[:,idt]
 
         #  "const_decay" or "sudden" or "no_change"
@@ -377,14 +365,12 @@ for WIND in TRY_NUMBER:
         if idt <= N_AC_STEPS:
             nlp = nlp_initial
         else:
-            nlp = nlp = setupNLP(horizon, Ts, COST_Q, COST_P, COST_R,
-                                 MODEL_PARAMS[current_model_idx],
-                                 MODEL_BANK[current_model_idx],
-                                 track, track_cons=TRACK_CONS)
+            nlp = setupNLP(horizon, Ts, COST_Q, COST_P, COST_R,
+                      MODEL_PARAMS[current_model_idx],
+                      MODEL_BANK[current_model_idx],
+                      track, track_cons=TRACK_CONS)
 
         umpc, fval, xmpc, violation = nlp.solve(x0=x0, xref=xref[:2,:], uprev=uprev)
-        COST_ALL.append(fval)
-        print("this ", fval)
 
         inputs[:,idt] = umpc[:,0]
         uprev = inputs[:,idt]  # Update uprev for next iteration
@@ -398,6 +384,9 @@ for WIND in TRY_NUMBER:
 
         # update current position with numerical integration (exact model)
         x_next, dxdt_next = model.sim_continuous(states[:,idt], inputs[:,idt].reshape(-1,1), [0, Ts])
+        Ain, bin = Boundary(np.array(x_next[:2, -1]), track)
+        flag = (np.array(Ain @ np.array(x_next[:2, -1])).T > np.array(np.array([bin[0][0], bin[1][0]]))).any()
+        violation_total.append(flag * 0.02)
 
         states[:,idt+1] = x_next[:,-1]
         dstates[:,idt+1] = dxdt_next[:,-1]
@@ -433,6 +422,7 @@ for WIND in TRY_NUMBER:
         # In your main loop:
         if idt > 0:
             # Calculate errors for all models at once
+
             errors = np.mean((evaluate_models_vectorized(MODEL_BANK, N_MODELS, states[:, idt], inputs[:, idt], Ts, params_pass) - states[0:4, idt + 1]) ** 2, axis=1)
 
             # Update error windows using numpy operations
@@ -445,9 +435,6 @@ for WIND in TRY_NUMBER:
                 avg_errors = np.mean(error_windows, axis=1)
                 new_model_idx = np.argmin(avg_errors)
                 ind_best_KM = avg_errors.argsort()[:smoothing_mu_over_mod]
-
-
-                choosen_errors.append(avg_errors[new_model_idx])
 
                 if new_model_idx != current_model_idx:
                     current_model_idx = new_model_idx
@@ -470,95 +457,26 @@ for WIND in TRY_NUMBER:
         Hs1_2.append(copy.deepcopy(hstates2[1]))
 
         end = tm.time()
-        # print("iter: {}, model: {}, cost: {:.5f}, time: {:.2f}, mse*10000: {:.5f}".format(
-        #     idt,
-        #     current_model_idx,
-        #     fval,
-        #     end - start,
-        #     np.mean(error_windows[current_model_idx])*10000 if window_count > 0 else 0.0
-        # ))
+        print("iter: {}, model: {}, cost: {:.5f}, time: {:.2f}, mse*10000: {:.5f}".format(
+            idt,
+            current_model_idx,
+            fval,
+            end - start,
+            np.mean(error_windows[current_model_idx])*10000 if window_count > 0 else 0.0
+        ))
 
         mean_cost = np.mean(fval_history)
-        # print(f"Mean cost at iter {idt}: {mean_cost:.3f}")
-
-    # plot speed
-    plt.figure(figsize=(6.4, 2.4))
-    vel = np.sqrt(dstates[0, :] ** 2 + dstates[1, :] ** 2)
-    plt.plot(time[:n_steps - horizon], ref_speeds, color="#E5AE1C", linewidth=4, label='Reference')
-    plt.plot(time[:n_steps - horizon], vel[:n_steps - horizon], color="#0B67B2", linewidth=4, label='Actual')
-    # plt.plot(time[:n_steps-horizon], states[3,:n_steps-horizon], label='vx')
-    # plt.plot(time[:n_steps-horizon], states[4,:n_steps-horizon], label='vy')
-    plt.xlabel(r'Time [$\mathrm{s}$]')
-    plt.ylabel(r'Speed [$\frac{ \mathrm{m} }{\mathrm{s}}$]')
-    plt.grid(True)
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(media_dir + '/Speeds.png', dpi=400, bbox_inches="tight")
-
-    # Create the track plot
-    fig_track = track.plot(color='k', grid=False)
-    # Create a custom colormap that goes from blue to purple to red to yellow
-    # This should match the reference image better
-    colors_list = ['navy', 'blue', 'orange', 'yellow']
-    custom_cmap = LinearSegmentedColormap.from_list("custom_speed", colors_list)
-    # Normalize velocity values for colormapping
-    norm = colors.Normalize(vmin=np.min(vel[:n_steps - horizon]),
-                            vmax=np.max(vel[:n_steps - horizon]))
-    # Plot trajectory with changing colors based on velocity
-    points = np.array([states[0, :-(horizon)], states[1, :-(horizon)]]).T.reshape(-1, 1, 2)
-    segments = np.concatenate([points[:-1], points[1:]], axis=1)
-    # Create a LineCollection with the colored segments
-    lc = LineCollection(segments, cmap=custom_cmap, norm=norm, linewidth=1.5, alpha=0.5)
-    lc.set_array(vel[:n_steps - horizon - 1])
-    plt.gca().add_collection(lc)
-    # Add a colorbar
-    sm = plt.cm.ScalarMappable(cmap=custom_cmap, norm=norm)
-    sm.set_array([])
-    cbar = plt.colorbar(sm, orientation='vertical')
-    cbar.set_label(r'Speed [${ \mathrm{m} }/{\mathrm{s}}$]')
-    # Remove axes, ticks, and frame
-    ax.set_axis_off()
-    plt.axis('equal')
-    plt.axis('off')
-
-    # Remove the figure border
-    fig_track.tight_layout(pad=0)
-    fig_track.subplots_adjust(left=0, right=.8, top=1, bottom=0)
-    plt.savefig(media_dir + '/Traj_Velocity.png', dpi=400, bbox_inches="tight")
+        print(f"Mean cost at iter {idt}: {mean_cost:.3f}")
 
 
-    # Create time bins
-    time_steps = int(SIM_TIME / Ts)
-    model_usage = np.ones((N_MODELS, time_steps))
 
-    # Line thickness (number of rows to fill)
-    thickness = 12  # Adjust this value to make lines thicker or thinner
+    for i in range(len(lap_times)-1,0,-1) :
+        if lap_times[i] != 0. :
+            lap_times[i] = lap_times[i] - lap_times[i-1]
+    print(lap_times)
+    print("lap times:",lap_times, "violation: ",np.sum(violation_total), "mean_dev", np.mean(fval_history))
+    ALL_TRYS.append((lap_times, np.sum(violation_total), np.mean(fval_history)))
+    print(ALL_TRYS)
 
-    # Fill in the grid
-    for t in range(time_steps):
-        if t in np.array(model_switches):
-            idx = model_switches.index(t)
-            # Fill current model and adjacent rows
-            for offset in range(-thickness // 2, thickness // 2 + 1):
-                row = chosen_models[idx] + offset
-                if 0 <= row < N_MODELS:  # Make sure we stay within bounds
-                    model_usage[row, t:] = 0
+print(ALL_TRYS)
 
-            # Clear previous model's usage
-            if idx > 0:
-                prev_model = chosen_models[idx - 1]
-                for offset in range(-thickness // 2, thickness // 2 + 1):
-                    row = prev_model + offset
-                    if 0 <= row < N_MODELS:
-                        model_usage[row, t:] = 1
-
-    COSTS_MEAN = np.mean(COST_ALL)
-    COSTS_SUM = np.sum(COST_ALL)
-    AVGs.append(COSTS_MEAN)
-    SUMs.append(COSTS_SUM)
-
-    print("mean: ",COSTS_MEAN)
-    print("sum: ",COSTS_SUM)
-
-print(AVGs)
-np.save('THE_BANK_PLOT.npy', AVGs)
