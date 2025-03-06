@@ -1,10 +1,10 @@
 from setuptools import setup
 
 setup(
-	name='apacrace',
+	name='llampc',
 	version='1.0',
-	author='Dvij Kalaria',
-	author_email='dkalaria@andrew.cmu.edu',
+	author='Maitham AL-Sunni',
+	author_email='malsunni@andrew.cmu.edu',
 	install_requires=[
 		'pandas==1.0.3',
 		'cvxpy==1.1.24',

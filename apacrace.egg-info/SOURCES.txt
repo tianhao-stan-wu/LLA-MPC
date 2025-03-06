@@ -1,8 +1,0 @@
-LICENSE.md
-README.md
-setup.py
-apacrace.egg-info/PKG-INFO
-apacrace.egg-info/SOURCES.txt
-apacrace.egg-info/dependency_links.txt
-apacrace.egg-info/requires.txt
-apacrace.egg-info/top_level.txt
