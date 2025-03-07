@@ -15,13 +15,13 @@ This repository contains the code for the paper "LLA-MPC: Fast Adaptive Control 
 ## Numerical Simulations
 
 <div align="center" style="display: flex; justify-content: space-around; width: 100%;">
-  <div style="width: 48%; margin-right: 2%; box-sizing: border-box;"> <!-- Include margin and box sizing for precise control -->
+  <div style="width: 40%; margin-right: 2%; box-sizing: border-box;"> <!-- Include margin and box sizing for precise control -->
     <img src="results/table1.png" style="width: 100%;">
     <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
       ETHZ Track
     </div>
   </div>
-  <div style="width: 48%; box-sizing: border-box;">
+  <div style="width: 40%; box-sizing: border-box;">
     <img src="results/table2.png" style="width: 100%;">
     <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
       ETHZMobil Track
