@@ -19,7 +19,7 @@ This repository contains the code for the paper "LLA-MPC: Fast Adaptive Control 
 #### ETHZ Track
 
 <div align="center">
-  <img src="results/APACRace/CASE 2 (GRAD AFTER)/apac1" width="32%"/>
+  <img src="results/APACRace/CASE 2 (GRAD AFTER)/apac1.gif" width="32%"/>
   <img src="gifs/numerical_simulation_2.gif" width="32%"/>
   <img src="gifs/numerical_simulation_3.gif" width="32%"/>
 </div>
