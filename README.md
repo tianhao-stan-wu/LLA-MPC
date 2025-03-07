@@ -14,20 +14,6 @@ This repository contains the code for the paper "LLA-MPC: Fast Adaptive Control 
 
 ## Numerical Simulations
 
-<div align="center" style="display: flex; justify-content: space-around; width: 100%;">
-  <div style="width: 40%; margin-right: 2%; box-sizing: border-box;"> <!-- Include margin and box sizing for precise control -->
-    <img src="results/table1.png" style="width: 100%;">
-    <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
-      ETHZ Track
-    </div>
-  </div>
-  <div style="width: 40%; box-sizing: border-box;">
-    <img src="results/table2.png" style="width: 100%;">
-    <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
-      ETHZMobil Track
-    </div>
-  </div>
-</div>
 
 <div align="center">
   <table>
@@ -57,26 +43,34 @@ This repository contains the code for the paper "LLA-MPC: Fast Adaptive Control 
 
 #### ETHZ Track
 
-<div align="center" style="position: relative; display: flex; justify-content: space-around; width: 100%;">
-  <div style="position: relative; width: 32%; margin-bottom: 20px;"> <!-- Added margin for spacing -->
-    <img src="results/LLA/CASE 2 (GRAD AFTER)/lla1.gif" style="width: 100%;">
-    <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);"> <!-- Caption below image -->
-      LLA-MPC
-    </div>
-  </div>
-  <div style="position: relative; width: 32%; margin-bottom: 20px;">
-    <img src="results/APACRace/CASE 2 (GRAD AFTER)/apac1.gif" style="width: 100%;">
-    <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
-      APACRace
-    </div>
-  </div>
-  <div style="position: relative; width: 32%; margin-bottom: 20px;">
-    <img src="results/GT/CASE 2 (GRAD AFTER)/ora1.gif" style="width: 100%;">
-    <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
-      Oracle
-    </div>
-  </div>
+<div align="center">
+  <table>
+    <tr>
+      <!-- LLA-MPC -->
+      <td>
+        <img src="results/LLA/CASE 2 (GRAD AFTER)/lla1.gif" style="width: 400px;"> <!-- Adjust width as needed -->
+        <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
+          LLA-MPC
+        </div>
+      </td>
+      <!-- APACRace -->
+      <td>
+        <img src="results/APACRace/CASE 2 (GRAD AFTER)/apac1.gif" style="width: 400px;"> <!-- Adjust width as needed -->
+        <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
+          APACRace
+        </div>
+      </td>
+      <!-- Oracle -->
+      <td>
+        <img src="results/GT/CASE 2 (GRAD AFTER)/ora1.gif" style="width: 400px;"> <!-- Adjust width as needed -->
+        <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
+          Oracle
+        </div>
+      </td>
+    </tr>
+  </table>
 </div>
+
 
 
 #### ETHZMobil Track
