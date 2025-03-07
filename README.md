@@ -7,6 +7,9 @@
 
 This repository contains the code for the paper "LLA-MPC: Fast Adaptive Control for Autonomous Racing".
 
+## Video Presentation (Coming soon!)
+
+
 ## Numerical Simulations
 
 
