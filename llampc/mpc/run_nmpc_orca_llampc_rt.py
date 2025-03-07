@@ -49,10 +49,10 @@ plt.rcParams['text.usetex'] = True
 # Settings
 
 # Make it "True"/"False" if you want to save a video/photo.
-SAVE_VIDEO = False
+SAVE_VIDEO = True
 
 # GENERAL
-SIM_TIME = 10
+SIM_TIME = 36
 SAMPLING_TIME = 0.02
 
 # MPC
@@ -63,7 +63,7 @@ COST_R = np.diag([5/1000, 1])
 TRACK_CONS = False
 
 # LLA-MPC BANK AND MU ESTIMATION/SMOOTHING
-N_MODELS = 1  # number of models in the bank
+N_MODELS = 5000  # number of models in the bank
 LookBack_W = 10  # Number of steps to accumulate error
 smoothing_mu = 20 # moving avg for MUs
 smoothing_mu_over_mod = 10 # getting the avg MUs for the best N models
@@ -122,14 +122,18 @@ def find_closest_point(x, y, raceline):
     idx = np.argmin(distances)
     return idx, x_refs[idx], y_refs[idx], distances[idx]
 
-def update_friction(Df,Dr,curr_time,style='const_decay') :
+def update_friction(Df,Dr,curr_time,style='sudden') :
     if style is 'const_decay' :
-        if curr_time > 14.3:
+        if curr_time > 14.3: # For ETHZ
+        # if curr_time > 5: # For ETHZMobil
             Df -= Df/2600.
             Dr -= Dr/2600.
     elif style is 'sudden' :
-        if curr_time > 5 and curr_time < 5.2:
-        # if curr_time > 10 and curr_time < 10.2:
+        # if curr_time > 3.3 and curr_time < 3.5: # For ETHZ
+        if curr_time > 14.3 and curr_time < 14.5: # For ETHZ
+
+        # if curr_time > 5 and curr_time < 5.2: # For ETHZMobil
+        # if curr_time > 10 and curr_time < 10.2: # For ETHZMobil
             Df -= Df/22.
             Dr -= Dr/22.
     elif style is 'no_change' :
@@ -146,12 +150,12 @@ variation_dict = {
     # 'Cm2': 0.15,         # 15% variation
     # 'Cr0': 0.15,         # 15% variation
     # 'Cr2': 0.15,         # 15% variation
-    'Br': 2.5,          # 15% variation
-    'Cr': 2.5,         # 15% variation
-    'Dr': 2.5,          # 15% variation
-    'Bf': 2.5,          # 15% variation
-    'Cf': 2.5,          # 15% variation
-    'Df': 2.5,          # 15% variation
+    'Br': 0.2,          # 15% variation
+    'Cr': 0.1,         # 15% variation
+    'Dr': 0.5,          # 15% variation
+    'Bf': 0.2,          # 15% variation
+    'Cf': 0.1,          # 15% variation
+    'Df': 0.5,          # 15% variation
 }
 
 # Create model bank with parameter variations
@@ -182,7 +186,7 @@ smoother = ExponentialSmoother(alpha=mu_alpha)
 # load track
 
 TRACK_NAME = 'ETHZ'
-track = ETHZMobil(reference='optimal', longer=True)
+track = ETHZ(reference='optimal', longer=True)
 
 
 # Setup NLP solvers for all models
@@ -247,7 +251,7 @@ states[:,0] = x_init
 print('starting at ({:.1f},{:.1f})'.format(x_init[0], x_init[1]))
 
 
-media_dir = "LLA"
+media_dir = "LLA-MPC"
 os.makedirs(media_dir, exist_ok=True)
 
 # dynamic plot
@@ -255,20 +259,6 @@ H = .1
 W = .05
 dims = np.array([[-H/2.,-W/2.],[-H/2.,W/2.],[H/2.,W/2.],[H/2.,-W/2.],[-H/2.,-W/2.]])
 
-fig_track = track.plot(color='k', grid=False)
-fig_track.set_dpi(50)
-plt.plot(track.x_raceline, track.y_raceline, '--k', alpha=0.5, lw=0.5)
-ax = plt.gca()
-LnS, = ax.plot(states[0,0], states[1,0], '#4B0082', label='Trajectory',alpha=0.65)
-# LnR, = ax.plot(states[0,0], states[1,0], '-b', marker='o', markersize=.5, lw=0.5, label="reference")
-xyproj, _ = track.project(x=x_init[0], y=x_init[1], raceline=track.raceline)
-LnP, = ax.plot(states[0,0] + dims[:,0]*np.cos(states[2,0]) - dims[:,1]*np.sin(states[2,0])\
-		, states[1,0] + dims[:,0]*np.sin(states[2,0]) + dims[:,1]*np.cos(states[2,0]), 'red', alpha=0.8, label='Current pose')
-LnH, = ax.plot(hstates[0], hstates[1], '-g', marker='o', markersize=.5, lw=0.5, color='green', label="ground truth")
-LnH2, = ax.plot(hstates2[0], hstates2[1], '-b', marker='o', markersize=.5, lw=0.5, color='blue', label="prediction")
-plt.xlabel(r'$x$ [$\mathrm{m}$]')
-plt.ylabel(r'$y$ [$\mathrm{m}$]')
-plt.legend()
 
 # Initialize model selection variables
 current_model_idx = 0  # Start with nominal model
@@ -281,7 +271,7 @@ for idt in range(n_steps-horizon):
     x0 = states[:,idt]
 
     #  "const_decay" or "sudden" or "no_change"
-    model.Df, model.Dr = update_friction(model.Df, model.Dr, idt * Ts, "const_decay")
+    model.Df, model.Dr = update_friction(model.Df, model.Dr, idt * Ts)
     params['Df'], params['Dr'] = model.Df, model.Dr
 
     # planner based on BayesOpt
@@ -294,8 +284,8 @@ for idt in range(n_steps-horizon):
     ref_speeds.append(v)
     deviation.append(find_closest_point(x0[0], x0[1], track.raceline)[-1])
 
-    # if projidx > 656:
-    if projidx > 440:
+    if projidx > 656:
+    # if projidx > 440:
         if laps_completed > 0:
             lap_times[laps_completed] = idt * Ts
             print(lap_times)
@@ -399,61 +389,7 @@ for idt in range(n_steps-horizon):
     ))
 
 #####################################################################
-# SAVE VIDEO
-#
-# # **Custom Indigo-Gold Colormap**
-# colors = ["#4B0082", "#FFD700"]  # Indigo to Gold
-# cmap = mcolors.LinearSegmentedColormap.from_list("indigo_gold", colors)
-# norm = mcolors.Normalize(vmin=0, vmax=n_steps-horizon)  # Normalize time range
-#
-# # **Create Segments for LineCollection**
-# segments = np.array([[[states[0, i], states[1, i]], [states[0, i+1], states[1, i+1]]]
-#                      for i in range(n_steps-horizon-1)])
-#
-# lc = LineCollection([], cmap=cmap, norm=norm, linewidth=2)
-# ax.add_collection(lc)
-
-def update(idt):
-    if idt == 0:
-        fig_track.tight_layout()
-
-    seconds = (idt*Ts) % 60  # Keep seconds in base 60
-    ax.set_title(f"Time {seconds:06.2f}")
-
-    # # Get trajectory up to the current frame
-    # new_segments = segments[:idt]
-    #
-    # # Assign colors to segments based on time index
-    # new_colors = [cmap(norm(i)) for i in range(idt)]
-    #
-    # # Update the LineCollection with new segments and colors
-    # lc.set_segments(new_segments)
-    # lc.set_array(np.arange(idt))  # Apply color mapping
-
-
-    LnS.set_xdata(states[0, :idt + 1])
-    LnS.set_ydata(states[1, :idt + 1])
-    #
-    # color = cmap(norm(idt))
-    # LnS.set_color(color)  # Set color dynamically
-
-    # #
-    # # LnR.set_xdata(xref[0,1:])
-    # # LnR.set_ydata(xref[1,1:])
-    # #
-    LnP.set_xdata(states[0, idt] + dims[:, 0] * np.cos(states[2, idt]) - dims[:, 1] * np.sin(states[2, idt]))
-    LnP.set_ydata(states[1, idt] + dims[:, 0] * np.sin(states[2, idt]) + dims[:, 1] * np.cos(states[2, idt]))
-
-
-    # #
-    LnH.set_xdata(Hs0[idt])
-    LnH.set_ydata(Hs1[idt])
-
-    LnH2.set_xdata(Hs0_2[idt])
-    LnH2.set_ydata(Hs1_2[idt])
-
-    return LnS, LnP, LnH, LnH2
-
+# SAVE FIGURES AND VIDEOS
 
 # Create binary grid visualization of model switching
 plt.figure(figsize=(6.4, 2.4))
@@ -498,7 +434,7 @@ cbar.set_ticklabels(['Chosen', 'Not Chosen'])
 plt.xlabel(r'Time [$\mathrm{s}$]')
 plt.ylabel('Model Index')
 plt.tight_layout()
-plt.savefig(media_dir + '/Switching_Grid.png', dpi=1200)
+plt.savefig(media_dir + '/Switching_Grid.png', dpi=400)
 
 # plot speed
 plt.figure(figsize=(6.4, 2.4))
@@ -510,7 +446,7 @@ plt.ylabel(r'Speed [$\frac{ \mathrm{m} }{\mathrm{s}}$]')
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
-plt.savefig(media_dir+'/Speeds.png', dpi=1200, bbox_inches="tight")
+plt.savefig(media_dir+'/Speeds.png', dpi=400, bbox_inches="tight")
 
 
 # # plot acceleration
@@ -520,7 +456,7 @@ plt.xlabel(r'Time [$\mathrm{s}$]')
 plt.ylabel('PWM duty cycle [-]')
 plt.grid(True)
 plt.tight_layout()
-plt.savefig(media_dir+'/Acc.png', dpi=1200, bbox_inches="tight")
+plt.savefig(media_dir+'/Acc.png', dpi=400, bbox_inches="tight")
 
 
 # plot mus
@@ -532,7 +468,7 @@ plt.xlabel(r'Time [$\mathrm{s}$]')
 plt.ylabel(r'$\mu$')
 plt.legend()
 plt.tight_layout()
-plt.savefig(media_dir+'/MUs.png', dpi=1200, bbox_inches="tight")
+plt.savefig(media_dir+'/MUs.png', dpi=400, bbox_inches="tight")
 
 # np.save(media_dir+'/Time.npy', time[:n_steps-horizon])
 # np.save(media_dir+'/MUs.npy', MUs)
@@ -545,7 +481,7 @@ plt.xlabel(r'Time [$\mathrm{s}$]')
 plt.ylabel(r'Steering [$\mathrm{rad}$]')
 plt.grid(True)
 plt.tight_layout()
-plt.savefig(media_dir+'/steering.png', dpi=1200, bbox_inches="tight")
+plt.savefig(media_dir+'/steering.png', dpi=400, bbox_inches="tight")
 
 
 # plot inertial heading
@@ -555,7 +491,7 @@ plt.xlabel(r'Time [$\mathrm{s}$]')
 plt.ylabel(r'Orientation [$\mathrm{rad}$]')
 plt.grid(True)
 plt.tight_layout()
-plt.savefig(media_dir+'/orientation.png', dpi=1200, bbox_inches="tight")
+plt.savefig(media_dir+'/orientation.png', dpi=400, bbox_inches="tight")
 
 
 plt.figure()
@@ -568,47 +504,157 @@ plt.ylabel(r'$\mu$ $\mathrm{N}$ [$\mathrm{N}$]')
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
-plt.savefig(media_dir+'/Ds.png', dpi=1200, bbox_inches="tight")
+plt.savefig(media_dir+'/Ds.png', dpi=400, bbox_inches="tight")
 
 
-if SAVE_VIDEO == True:
-    fps = 50
+# fig_track = track.plot(color='k', grid=False)
+# # fig_track.set_dpi(50)
+# plt.plot(track.x_raceline, track.y_raceline, '--k', alpha=0.5, lw=0.5)
+# ax = plt.gca()
+# LnS, = ax.plot(states[0,0], states[1,0], '#4B0082', label='Trajectory',alpha=0.65)
+# xyproj, _ = track.project(x=x_init[0], y=x_init[1], raceline=track.raceline)
+# LnP, = ax.plot(states[0,0] + dims[:,0]*np.cos(states[2,0]) - dims[:,1]*np.sin(states[2,0])\
+# 		, states[1,0] + dims[:,0]*np.sin(states[2,0]) + dims[:,1]*np.cos(states[2,0]), 'red', alpha=0.8, label='Current pose')
+# LnH, = ax.plot(hstates[0], hstates[1], '-g', marker='o', markersize=.5, lw=0.5, color='green', label="ground truth")
+# LnH2, = ax.plot(hstates2[0], hstates2[1], '-b', marker='o', markersize=.5, lw=0.5, color='blue', label="prediction")
+#
+# # Remove axes, ticks, and frame
+# ax.set_axis_off()
+# plt.axis('equal')
+# plt.axis('off')
+#
+# plt.legend()
+#
+# def update(idt):
+#     if idt == 0:
+#         fig_track.tight_layout(pad=0)
+#
+#
+#     ax.set_title(f"Frame {idt}")
+#
+#     LnS.set_xdata(states[0, :idt + 1])
+#     LnS.set_ydata(states[1, :idt + 1])
+#
+#     LnP.set_xdata(states[0, idt] + dims[:, 0] * np.cos(states[2, idt]) - dims[:, 1] * np.sin(states[2, idt]))
+#     LnP.set_ydata(states[1, idt] + dims[:, 0] * np.sin(states[2, idt]) + dims[:, 1] * np.cos(states[2, idt]))
+#
+#     LnH.set_xdata(Hs0[idt])
+#     LnH.set_ydata(Hs1[idt])
+#
+#     LnH2.set_xdata(Hs0_2[idt])
+#     LnH2.set_ydata(Hs1_2[idt])
+#
+#     return LnS, LnP, LnH, LnH2
+#
+# if SAVE_VIDEO:
+#     fps = 50
+#     interval = 1000 / fps  # Convert fps to milliseconds
+#     ani = animation.FuncAnimation(fig_track, update, frames=int((n_steps-horizon)/3), interval=interval, blit=True)
+#     video_path = f"{media_dir}/traj_video.mp4"
+#     # fig_track.tight_layout()
+#     ani.save(video_path, fps=fps, extra_args=['-vcodec', 'h264_videotoolbox', '-b:v', '2000k', '-preset', 'ultrafast'])
+#     print(f"🎥 Smooth video saved as {video_path}")
+
+
+# Assuming 'track', 'states', 'dims', 'x_init', 'hstates', 'hstates2', 'vel', 'n_steps', 'horizon' are defined elsewhere
+# Custom colormap and normalization
+colors_list = ['navy', 'blue', 'orange', 'yellow']
+custom_cmap = LinearSegmentedColormap.from_list("custom_speed", colors_list)
+norm = colors.Normalize(vmin=np.min(vel[:n_steps-horizon]), vmax=np.max(vel[:n_steps-horizon]))
+
+# Create the track plot
+fig_track = track.plot(color='k', grid=False)
+ax = plt.gca()
+# Create segments for the changing colors based on velocity
+points = np.array([states[0, :n_steps-horizon], states[1, :n_steps-horizon]]).T.reshape(-1, 1, 2)
+segments = np.concatenate([points[:-1], points[1:]], axis=1)
+lc = LineCollection(segments, cmap=custom_cmap, norm=norm, linewidth=1.5, alpha=0.5)
+lc.set_array(vel[:n_steps-horizon-1])
+ax.add_collection(lc)
+
+# Additional lines
+LnP, = ax.plot(states[0,0] + dims[:,0]*np.cos(states[2,0]) - dims[:,1]*np.sin(states[2,0]),
+               states[1,0] + dims[:,0]*np.sin(states[2,0]) + dims[:,1]*np.cos(states[2,0]), 'red', alpha=0.8, label='Current pose')
+LnH, = ax.plot(hstates[0], hstates[1], '-g', marker='o', markersize=.5, lw=0.5, color='green', label="ground truth")
+LnH2, = ax.plot(hstates2[0], hstates2[1], '-b', marker='o', markersize=.5, lw=0.5, color='blue', label="prediction")
+
+# Add a colorbar
+sm = plt.cm.ScalarMappable(cmap=custom_cmap, norm=norm)
+sm.set_array([])
+cbar = plt.colorbar(sm, orientation='vertical')
+cbar.set_label(r'Speed [${ \mathrm{m} }/{\mathrm{s}}$]')
+
+# Remove axes, ticks, and frame
+ax.set_axis_off()
+plt.axis('equal')
+plt.axis('off')
+plt.legend()
+
+def update(idt):
+    if idt == 0:
+        fig_track.tight_layout(pad=0)
+    ax.set_title(f"Frame {idt}")
+    # Update segments for dynamic coloring
+    new_points = np.array([states[0, :idt+1], states[1, :idt+1]]).T.reshape(-1, 1, 2)
+    new_segments = np.concatenate([new_points[:-1], new_points[1:]], axis=1)
+    lc.set_segments(new_segments)
+    lc.set_array(vel[:idt])
+
+    LnP.set_xdata(states[0, idt] + dims[:, 0] * np.cos(states[2, idt]) - dims[:, 1] * np.sin(states[2, idt]))
+    LnP.set_ydata(states[1, idt] + dims[:, 0] * np.sin(states[2, idt]) + dims[:, 1] * np.cos(states[2, idt]))
+
+    LnH.set_xdata(Hs0[idt])
+    LnH.set_ydata(Hs1[idt])
+
+    LnH2.set_xdata(Hs0_2[idt])
+    LnH2.set_ydata(Hs1_2[idt])
+
+    return lc, LnP, LnH, LnH2
+
+if SAVE_VIDEO:
+    fps = 17
     interval = 1000 / fps  # Convert fps to milliseconds
-    ani = animation.FuncAnimation(fig_track, update, frames=n_steps-horizon, interval=interval, blit=True)
+    # Generate frame numbers skipping every 2 frames
+    frame_numbers = range(0, n_steps-horizon,3)  # Adjust step to skip frames
+    ani = animation.FuncAnimation(fig_track, update, frames=frame_numbers, interval=interval, blit=True)
     video_path = f"{media_dir}/traj_video.mp4"
-    # fig_track.tight_layout()
-    ani.save(video_path, fps=fps, extra_args=['-vcodec', 'h264_videotoolbox', '-b:v', '4000k', '-preset', 'ultrafast'])
+    ani.save(video_path, fps=fps, extra_args=['-vcodec', 'h264_videotoolbox', '-b:v', '2000k', '-preset', 'ultrafast'])
     print(f"🎥 Smooth video saved as {video_path}")
-else:
-    # Create the track plot
-    fig_track = track.plot(color='k', grid=False)
-    # Create a custom colormap that goes from blue to purple to red to yellow
-    # This should match the reference image better
-    colors_list = ['navy', 'blue', 'orange','yellow']
-    custom_cmap = LinearSegmentedColormap.from_list("custom_speed", colors_list)
-    # Normalize velocity values for colormapping
-    norm = colors.Normalize(vmin=np.min(vel[:n_steps-horizon]),
-                            vmax=np.max(vel[:n_steps-horizon]))
-    # Plot trajectory with changing colors based on velocity
-    points = np.array([states[0,:-(horizon)], states[1,:-(horizon)]]).T.reshape(-1, 1, 2)
-    segments = np.concatenate([points[:-1], points[1:]], axis=1)
-    # Create a LineCollection with the colored segments
-    lc = LineCollection(segments, cmap=custom_cmap, norm=norm, linewidth=1.5, alpha=0.5)
-    lc.set_array(vel[:n_steps-horizon-1])
-    plt.gca().add_collection(lc)
-    # Add a colorbar
-    sm = plt.cm.ScalarMappable(cmap=custom_cmap, norm=norm)
-    sm.set_array([])
-    cbar = plt.colorbar(sm, orientation='vertical')
-    cbar.set_label(r'Speed [${ \mathrm{m} }/{\mathrm{s}}$]')
-    # Remove axes, ticks, and frame
-    ax.set_axis_off()
-    plt.axis('equal')
-    plt.axis('off')
-    # Remove the figure border
-    fig_track.tight_layout(pad=0)
-    fig_track.subplots_adjust(left=0, right=.8, top=1, bottom=0)
-    plt.savefig(media_dir+'/Traj_Velocity.png', dpi=1200, bbox_inches="tight")
+
+
+
+
+
+
+
+# Create the track plot
+fig_track = track.plot(color='k', grid=False)
+# Create a custom colormap that goes from blue to purple to red to yellow
+colors_list = ['navy', 'blue', 'orange','yellow']
+custom_cmap = LinearSegmentedColormap.from_list("custom_speed", colors_list)
+# Normalize velocity values for colormapping
+norm = colors.Normalize(vmin=np.min(vel[:n_steps-horizon]),
+                        vmax=np.max(vel[:n_steps-horizon]))
+# Plot trajectory with changing colors based on velocity
+points = np.array([states[0,:-(horizon)], states[1,:-(horizon)]]).T.reshape(-1, 1, 2)
+segments = np.concatenate([points[:-1], points[1:]], axis=1)
+# Create a LineCollection with the colored segments
+lc = LineCollection(segments, cmap=custom_cmap, norm=norm, linewidth=1.5, alpha=0.5)
+lc.set_array(vel[:n_steps-horizon-1])
+plt.gca().add_collection(lc)
+# Add a colorbar
+sm = plt.cm.ScalarMappable(cmap=custom_cmap, norm=norm)
+sm.set_array([])
+cbar = plt.colorbar(sm, orientation='vertical')
+cbar.set_label(r'Speed [${ \mathrm{m} }/{\mathrm{s}}$]')
+# Remove axes, ticks, and frame
+ax.set_axis_off()
+plt.axis('equal')
+plt.axis('off')
+# Remove the figure border
+fig_track.tight_layout(pad=0)
+fig_track.subplots_adjust(left=0, right=.8, top=1, bottom=0)
+plt.savefig(media_dir+'/Traj_Velocity.png', dpi=400, bbox_inches="tight")
 
 
 for i in range(len(lap_times)-1,0,-1) :
