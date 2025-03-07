@@ -7,6 +7,8 @@
 
 This repository contains the code for the paper "LLA-MPC: Fast Adaptive Control for Autonomous Racing".
 
+# Summary
+
 ## Video Presentation (Coming soon!)
 
 
@@ -14,3 +16,6 @@ This repository contains the code for the paper "LLA-MPC: Fast Adaptive Control 
 
 
 ## CARLA Simulations
+
+
+# How to run the Code
