@@ -14,6 +14,16 @@ This repository contains the code for the paper "LLA-MPC: Fast Adaptive Control 
 
 ## Numerical Simulations
 
+### Experiment 1
+
+#### ETHZ Track
+
+<div align="center">
+  <img src="gifs/numerical_simulation_1.gif" width="32%"/>
+  <img src="gifs/numerical_simulation_2.gif" width="32%"/>
+  <img src="gifs/numerical_simulation_3.gif" width="32%"/>
+</div>
+
 
 ## CARLA Simulations
 
