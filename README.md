@@ -29,6 +29,28 @@ This repository contains the code for the paper "LLA-MPC: Fast Adaptive Control 
   </div>
 </div>
 
+<div align="center">
+  <table>
+    <tr>
+      <!-- Image 1 -->
+      <td>
+        <img src="results/table1.png" width="300px"/> <!-- Adjust width as needed -->
+        <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
+          ETHZ Track
+        </div>
+      </td>
+      <!-- Image 2 -->
+      <td>
+        <img src="results/table2.png" width="300px"/> <!-- Adjust width as needed -->
+        <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
+         ETHZMobil Track
+        </div>
+      </td>
+    </tr>
+  </table>
+</div>
+
+
 
 ### Experiment 1
 
