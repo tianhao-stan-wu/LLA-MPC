@@ -269,10 +269,42 @@ This repository contains the code for the paper "LLA-MPC: Fast Adaptive Control 
 
 # How to run the Code
 
+## Installation
+We recommend creating a new [conda](https://docs.conda.io/en/latest/) environment:
+
+```
+conda create --name llampc python=3.6
+conda activate llampc
+```
+Then install LLA-MPC:
+
+```
+git clone https://github.com/DRIVE-LAB-CMU/LLA-MPC.git
+cd LLA-MPC/
+pip install -e .
+```
+
 ## LLA-MPC
 
+Run LLA-MPC  controller with the generated offline library of racelines as reference as follows:-
+```
+cd mpc
+python run_nmpc_orca_llampc_rt.py
+```
+
 ## APACRace
+Run APACRace  controller with the generated offline library of racelines as reference as follows:-
+
+```
+cd mpc
+python run_nmpc_orca_apacrace.py
+```
 
 ## Oracle
+Run the Oracle:-
+```
+cd mpc
+python run_nmpc_oracle.py
+```
 
 
