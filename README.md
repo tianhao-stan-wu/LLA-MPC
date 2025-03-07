@@ -20,14 +20,14 @@ This repository contains the code for the paper "LLA-MPC: Fast Adaptive Control 
     <tr>
       <!-- Image 1 -->
       <td>
-        <img src="results/table1.png" width="300px"/> <!-- Adjust width as needed -->
+        <img src="results/table1.png" width="400px"/> <!-- Adjust width as needed -->
         <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
           ETHZ Track
         </div>
       </td>
       <!-- Image 2 -->
       <td>
-        <img src="results/table2.png" width="300px"/> <!-- Adjust width as needed -->
+        <img src="results/table2.png" width="400px"/> <!-- Adjust width as needed -->
         <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
          ETHZMobil Track
         </div>
@@ -80,21 +80,21 @@ This repository contains the code for the paper "LLA-MPC: Fast Adaptive Control 
     <tr>
       <!-- LLA-MPC -->
       <td>
-        <img src="results/LLA T2/CASE 2 (GRAD AFTER)/lla1_2.gif" style="width: 300px;"> <!-- Adjust width as needed -->
+        <img src="results/LLA T2/CASE 2 (GRAD AFTER)/lla1_2.gif" style="width: 400px;"> <!-- Adjust width as needed -->
         <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
           LLA-MPC
         </div>
       </td>
       <!-- APACRace -->
       <td>
-        <img src="results/APACRace T2/CASE 2 (GRAD AFTER)/apac1_2.gif" style="width: 300px;"> <!-- Adjust width as needed -->
+        <img src="results/APACRace T2/CASE 2 (GRAD AFTER)/apac1_2.gif" style="width: 400px;"> <!-- Adjust width as needed -->
         <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
           APACRace
         </div>
       </td>
       <!-- Oracle -->
       <td>
-        <img src="results/GT T2/CASE 2 (GRAD AFTER)/ora1_2.gif" style="width: 300px;"> <!-- Adjust width as needed -->
+        <img src="results/GT T2/CASE 2 (GRAD AFTER)/ora1_2.gif" style="width: 400px;"> <!-- Adjust width as needed -->
         <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
           Oracle
         </div>
@@ -113,21 +113,21 @@ This repository contains the code for the paper "LLA-MPC: Fast Adaptive Control 
     <tr>
       <!-- LLA-MPC -->
       <td>
-        <img src="results/LLA/CASE 4 (SUDD AFTER) - 22/lla2.gif" style="width: 300px;"> <!-- Adjust width as needed -->
+        <img src="results/LLA/CASE 4 (SUDD AFTER) - 22/lla2.gif" style="width: 400px;"> <!-- Adjust width as needed -->
         <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
           LLA-MPC
         </div>
       </td>
       <!-- APACRace -->
       <td>
-        <img src="results/APACRace/CASE 4 (SUDD AFTER) - 22/apac2.gif" style="width: 300px;"> <!-- Adjust width as needed -->
+        <img src="results/APACRace/CASE 4 (SUDD AFTER) - 22/apac2.gif" style="width: 400px;"> <!-- Adjust width as needed -->
         <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
           APACRace
         </div>
       </td>
       <!-- Oracle -->
       <td>
-        <img src="results/GT/CASE 4 (SUDD AFTER) - 22/ora2.gif" style="width: 300px;"> <!-- Adjust width as needed -->
+        <img src="results/GT/CASE 4 (SUDD AFTER) - 22/ora2.gif" style="width: 400px;"> <!-- Adjust width as needed -->
         <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
           Oracle
         </div>
@@ -145,21 +145,21 @@ This repository contains the code for the paper "LLA-MPC: Fast Adaptive Control 
     <tr>
       <!-- LLA-MPC -->
       <td>
-        <img src="results/LLA T2/CASE 4 (SUDD AFTER) - 22/lla2_2.gif" style="width: 300px;"> <!-- Adjust width as needed -->
+        <img src="results/LLA T2/CASE 4 (SUDD AFTER) - 22/lla2_2.gif" style="width: 400px;"> <!-- Adjust width as needed -->
         <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
           LLA-MPC
         </div>
       </td>
       <!-- APACRace -->
       <td>
-        <img src="results/APACRace T2/CASE 4 (SUDD AFTER) - 22/apac2_2.gif" style="width: 300px;"> <!-- Adjust width as needed -->
+        <img src="results/APACRace T2/CASE 4 (SUDD AFTER) - 22/apac2_2.gif" style="width: 400px;"> <!-- Adjust width as needed -->
         <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
           APACRace
         </div>
       </td>
       <!-- Oracle -->
       <td>
-        <img src="results/GT T2/CASE 4 (SUDD AFTER) - 22/ora2_2.gif" style="width: 300px;"> <!-- Adjust width as needed -->
+        <img src="results/GT T2/CASE 4 (SUDD AFTER) - 22/ora2_2.gif" style="width: 400px;"> <!-- Adjust width as needed -->
         <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
           Oracle
         </div>
@@ -179,21 +179,21 @@ This repository contains the code for the paper "LLA-MPC: Fast Adaptive Control 
     <tr>
       <!-- LLA-MPC -->
       <td>
-        <img src="results/LLA/CASE 3 (SUDD BEG) - 22/lla3.gif" style="width: 300px;"> <!-- Adjust width as needed -->
+        <img src="results/LLA/CASE 3 (SUDD BEG) - 22/lla3.gif" style="width: 400px;"> <!-- Adjust width as needed -->
         <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
           LLA-MPC
         </div>
       </td>
       <!-- APACRace -->
       <td>
-        <img src="results/APACRace/CASE 3 (SUDD BEG) - 22/apac3.gif" style="width: 300px;"> <!-- Adjust width as needed -->
+        <img src="results/APACRace/CASE 3 (SUDD BEG) - 22/apac3.gif" style="width: 400px;"> <!-- Adjust width as needed -->
         <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
           APACRace
         </div>
       </td>
       <!-- Oracle -->
       <td>
-        <img src="results/GT/CASE 3 (SUDD BEG) - 22/ora3.gif" style="width: 300px;"> <!-- Adjust width as needed -->
+        <img src="results/GT/CASE 3 (SUDD BEG) - 22/ora3.gif" style="width: 400px;"> <!-- Adjust width as needed -->
         <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
           Oracle
         </div>
@@ -211,21 +211,21 @@ This repository contains the code for the paper "LLA-MPC: Fast Adaptive Control 
     <tr>
       <!-- LLA-MPC -->
       <td>
-        <img src="results/LLA T2/CASE 3 (SUDD BEG) - 22/lla3_2.gif" style="width: 300px;"> <!-- Adjust width as needed -->
+        <img src="results/LLA T2/CASE 3 (SUDD BEG) - 22/lla3_2.gif" style="width: 400px;"> <!-- Adjust width as needed -->
         <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
           LLA-MPC
         </div>
       </td>
       <!-- APACRace -->
       <td>
-        <img src="results/APACRace T2/CASE 3 (SUDD BEG) - 22/apac3_2.gif" style="width: 300px;"> <!-- Adjust width as needed -->
+        <img src="results/APACRace T2/CASE 3 (SUDD BEG) - 22/apac3_2.gif" style="width: 400px;"> <!-- Adjust width as needed -->
         <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
           APACRace
         </div>
       </td>
       <!-- Oracle -->
       <td>
-        <img src="results/GT T2/CASE 3 (SUDD BEG) - 22/ora3_2.gif" style="width: 300px;"> <!-- Adjust width as needed -->
+        <img src="results/GT T2/CASE 3 (SUDD BEG) - 22/ora3_2.gif" style="width: 400px;"> <!-- Adjust width as needed -->
         <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
           Oracle
         </div>
@@ -237,6 +237,34 @@ This repository contains the code for the paper "LLA-MPC: Fast Adaptive Control 
 
 
 ## CARLA Simulations
+
+<div align="center">
+<img src="results/CARLA%20VID.gif" width="600px"/>
+</div>
+
+
+<div align="center">
+  <table>
+    <tr>
+      <!-- Image 1 -->
+      <td>
+        <img src="results/CARLA%20MAP.gif" width="400px"/> <!-- Adjust width as needed -->
+        <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
+          Map
+        </div>
+      </td>
+      <!-- Image 2 -->
+      <td>
+        <img src="results/CARLA%20SPEEDS.gif" width="400px"/> <!-- Adjust width as needed -->
+        <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
+         Speeds
+        </div>
+      </td>
+    </tr>
+  </table>
+</div>
+
+
 
 
 # How to run the Code
