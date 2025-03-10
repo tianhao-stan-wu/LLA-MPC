@@ -237,6 +237,13 @@ This repository contains the code for the paper "LLA-MPC: Fast Adaptive Control 
 
 ## CARLA Simulations
 
+We perform an experiments on CARLA's Town #7:
+<div align="center">
+<img src="results/CARLA%20TRACK.png" width="600px"/>
+</div>
+
+The experiment we perform is identical to experiment #1 for the ETHZ and the ETHZMobil tracks, where we let the friction coefficient decay linearly. Here, we compare our method against a controller that does not account for the friction change to demonstrate LLA-MPC's adaptation ability.  
+
 With LLA-MPC:
 <div align="center">
 <img src="results/CARLA%20W.gif" width="600px"/>
