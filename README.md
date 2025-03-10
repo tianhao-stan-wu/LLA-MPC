@@ -4,7 +4,6 @@
 <img src="results/LLA-MPC.jpg" width="600px"/>
 </div>
 
-
 This repository contains the code for the paper "LLA-MPC: Fast Adaptive Control for Autonomous Racing".
 
 # Summary

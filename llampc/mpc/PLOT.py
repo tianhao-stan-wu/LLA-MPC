@@ -59,8 +59,8 @@ ERRORS =[ 0.329739847862762, 0.34001286776974976, 0.31229923871775184, 0.0469022
 
 # Applying Lowess to the data
 # ERRORS = lowess(ERRORS, TRY_NUMBER, frac=.9)[:, 1]  # The frac parameter controls the degree of smoothing
-ERRORS = lowess(ERRORS, TRY_NUMBER, frac=0.3)[:, 1]  # The frac parameter controls the degree of smoothing
-
+# ERRORS = lowess(ERRORS, TRY_NUMBER, frac=0.4)[:, 1]  # The frac parameter controls the degree of smoothing
+ERRORS = np.array(ERRORS)
 
 fig, ax = plt.subplots(figsize=(6, 2))
 plt.plot(np.array(TRY_NUMBER)*0.02,ERRORS*10/0.02,color="#0B67B2",linewidth=4,alpha=1)
@@ -85,8 +85,8 @@ ax.yaxis.set_major_locator(ticker.MultipleLocator(40))  # Set major tick interva
 # plt.legend()
 plt.tight_layout()
 
-# plt.show()
-plt.savefig('w_effect.png', dpi=300, bbox_inches="tight")
+plt.show()
+# plt.savefig('w_effect.png', dpi=300, bbox_inches="tight")
 
 
 
