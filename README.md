@@ -237,33 +237,15 @@ This repository contains the code for the paper "LLA-MPC: Fast Adaptive Control 
 
 ## CARLA Simulations
 
+With LLA-MPC:
 <div align="center">
-<img src="results/CARLA%20VID.gif" width="600px"/>
+<img src="results/CARLA%20W.gif" width="600px"/>
 </div>
 
-
+With nominal model only (no adaptation):
 <div align="center">
-  <table>
-    <tr>
-      <!-- Image 1 -->
-      <td>
-        <img src="results/CARLA%20MAP.gif" width="400px"/> <!-- Adjust width as needed -->
-        <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
-          Map
-        </div>
-      </td>
-      <!-- Image 2 -->
-      <td>
-        <img src="results/CARLA%20SPEEDS.gif" width="400px"/> <!-- Adjust width as needed -->
-        <div style="text-align: center; color: white; padding-top: 5px; background-color: rgba(0,0,0,0.7);">
-         Speeds
-        </div>
-      </td>
-    </tr>
-  </table>
+<img src="results/CARLA%20WO.gif" width="600px"/>
 </div>
-
-
 
 
 # How to run the Code
